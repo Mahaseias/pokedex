@@ -1,0 +1,38 @@
+﻿const CACHE_NAME = "pokedex-kanto-v10";
+const CORE_ASSETS = [
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./manifest.json",
+  "./vendor/jsqr.min.js",
+  "./data/kanto151.sample.json",
+  "./assets/home-hero.jpg",
+  "./assets/fonts/press-start-2p.ttf"
+];
+const SPRITES = Array.from({ length: 151 }, (_, i) => `./assets/sprites/${i + 1}.gif`);
+const QR_EXAMPLES = ["./data/qr_25.png", "./data/qr_151.png"];
+const ASSETS = [...CORE_ASSETS, ...SPRITES, ...QR_EXAMPLES];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    ))
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request))
+  );
+});
+
+
+

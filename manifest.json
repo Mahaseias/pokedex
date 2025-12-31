@@ -1,0 +1,9 @@
+{
+  "name": "Pokedex Kanto Web",
+  "short_name": "Pokedex",
+  "start_url": "./index.html",
+  "display": "browser",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": []
+}

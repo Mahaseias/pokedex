@@ -1,0 +1,166 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Pokédex Kanto (Offline + QR)</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Pokédex Kanto</div>
+    <nav class="tabs">
+      <button class="tab" data-route="home">Home</button>
+      <button class="tab" data-route="menu">Menu</button>
+      <button class="tab" data-route="who">Pokédex</button>
+      <button class="tab" data-route="scan">Ler Card (QR)</button>
+      <button class="tab" data-route="emu">Emulador</button>
+    </nav>
+    <button class="mini burger burger-float" data-route="menu">≡ Menu</button>
+  </header>
+
+  <main class="container">
+    <section id="view-home" class="view hero">
+      <div class="hero-overlay">
+        <button class="start-btn" data-goto="menu">Abrir Pokédex</button>
+      </div>
+    </section>
+
+    <section id="view-menu" class="view hidden">
+      <h1>Menu</h1>
+      <div class="menu-toggle">
+        <button class="mini burger" id="menu-toggle-btn">≡ Menu</button>
+        <div class="menu-icons">
+          <div class="mini-card" data-goto="home"><img src="./assets/sprites/1.gif" alt="Home" /> Home</div>
+          <div class="mini-card" data-goto="who"><img src="./assets/sprites/25.gif" alt="Pikachu" /> Pokédex</div>
+          <div class="mini-card" data-goto="scan"><img src="./assets/sprites/39.gif" alt="Jigglypuff" /> QR</div>
+          <div class="mini-card" data-goto="emu"><img src="./assets/sprites/150.gif" alt="Mewtwo" /> Emulador</div>
+        </div>
+      </div>
+      <div class="menu-grid menu-hidden" id="menu-grid">
+        <div class="menu-card">
+          <div class="menu-label">Módulo 1</div>
+          <div class="menu-title">Quem sou?</div>
+          <p class="muted small">Filtre e abra ficha rápida com tipos, habilidades e golpes.</p>
+          <button class="primary" data-goto="who">Abrir</button>
+        </div>
+        <div class="menu-card">
+          <div class="menu-label">Módulo 2</div>
+          <div class="menu-title">Scanner QR</div>
+          <p class="muted small">Câmera + QR para carregar o Pokémon por ID.</p>
+          <button class="primary" data-goto="scan">Abrir</button>
+        </div>
+        <div class="menu-card">
+          <div class="menu-label">Módulo 3</div>
+          <div class="menu-title">Emulador</div>
+          <p class="muted small">Importe ROM e prepare o canvas do core (fase 2).</p>
+          <button class="primary" data-goto="emu">Abrir</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-who" class="view hidden">
+      <h1>Pokédex</h1>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Tipo</label>
+            <select id="f-type">
+              <option value="">(qualquer)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tag</label>
+            <select id="f-tag">
+              <option value="">(qualquer)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Busca</label>
+            <input id="f-q" placeholder="Ex.: pika, char..." />
+          </div>
+        </div>
+        <p class="muted">Resultado atual: <span id="who-count">0</span> Pokémon</p>
+      </div>
+
+      <div id="who-list" class="list"></div>
+      <div id="who-modal" class="modal">
+        <div id="who-detail"></div>
+      </div>
+    </section>
+
+    <section id="view-scan" class="view hidden">
+      <h1>Ler Card (QR Code)</h1>
+      <p class="muted">
+        A câmera funciona via <code>getUserMedia</code> (permissão do usuário).
+        Use HTTPS (GitHub Pages) para evitar bloqueios.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Câmera</h2>
+          <div class="videoWrap">
+            <video id="video" playsinline></video>
+            <canvas id="canvas" class="hidden"></canvas>
+          </div>
+          <div class="row">
+            <button class="primary" id="btn-start">Iniciar câmera</button>
+            <button class="ghost" id="btn-stop" disabled>Parar</button>
+          </div>
+          <p class="muted small" id="scan-status">Aguardando...</p>
+        </div>
+
+        <div class="card">
+          <h2>Resultado</h2>
+          <div class="field">
+            <label>pokemon_id (do QR)</label>
+            <input id="scan-id" placeholder="Ex.: 25" />
+          </div>
+          <div class="row">
+            <button class="primary" id="btn-load">Carregar Pokémon</button>
+            <button class="ghost" id="btn-open-dex">Abrir na Pokédex</button>
+          </div>
+          <div id="scan-detail" class="detail"></div>
+          <p class="muted small">
+            Observação: o iOS Safari não suporta bem a Barcode Detection API, por isso usamos biblioteca JS (jsQR).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-emu" class="view hidden">
+      <h1>Emulador (placeholder)</h1>
+      <p class="muted">
+        Nesta etapa, deixamos a UI pronta: importar ROM, listar, e preparar área do canvas.
+        O core do emulador (GB/GBC primeiro) entra depois.
+      </p>
+
+      <div class="card">
+        <div class="field">
+          <label>Importar ROM (arquivo local)</label>
+          <input id="rom-file" type="file" />
+        </div>
+        <div class="row">
+          <button class="primary" id="btn-add-rom">Adicionar ROM</button>
+          <button class="ghost" id="btn-clear-roms">Limpar lista</button>
+        </div>
+
+        <h2>ROMs</h2>
+        <div id="rom-list" class="list"></div>
+
+        <h2>Área do Emulador</h2>
+        <div class="emuBox">
+          <canvas id="emu-canvas" width="320" height="288"></canvas>
+          <div class="muted small">Canvas 320×288 (GB/GBC). Controles na próxima fase.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./vendor/jsqr.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
