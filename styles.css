@@ -181,6 +181,50 @@ button.mini{
   cursor:pointer;
 }
 
+.emerald{
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:10px;
+}
+.emerald-left{
+  background:linear-gradient(180deg, #3ca08f, #1b5f59);
+  border:2px solid var(--border-strong);
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+}
+.emerald-id{font-size:12px; color:#d8f7e9; letter-spacing:1px;}
+.emerald-sprite{
+  background:rgba(0,0,0,.2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin:8px 0;
+  padding:6px;
+}
+.emerald-sprite img{width:100%; height:auto;}
+.emerald-name{font-family:var(--font-title); font-size:14px;}
+.emerald-sub{color:#d8f7e9; font-size:11px;}
+
+.emerald-right{
+  background:linear-gradient(180deg, #0f3f3c, #0b2f2d);
+  border:2px solid var(--border-strong);
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.emerald-row{background:rgba(0,0,0,.12); border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:12px;}
+.emerald-row.header{background:#178f9e; color:#fff; font-weight:bold; text-transform:uppercase; letter-spacing:1px;}
+.emerald-row .pill{
+  display:inline-block;
+  padding:2px 6px;
+  background:#d8c8a0;
+  color:#2b1a00;
+  border-radius:6px;
+  margin-left:4px;
+}
+.emerald-row.note{background:#f4efe3; color:#1a1200;}
 .profile-card{
   background:linear-gradient(180deg, rgba(12,55,58,.85), rgba(11,38,45,.9));
   border:2px solid var(--border-strong);
@@ -263,7 +307,7 @@ video{
   flex-direction:column;
   align-items:center;
   gap:16px;
-  padding:48px 16px 80px;
+  padding:56px 16px 64px;
 }
 .start-btn{
   border:2px solid var(--accent);

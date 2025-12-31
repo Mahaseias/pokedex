@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "pokedex-kanto-v10";
+﻿const CACHE_NAME = "pokedex-kanto-v11";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   "./app.js",
   "./manifest.json",
   "./vendor/jsqr.min.js",
+  "./vendor/wasmboy.wasm.esm.js",
   "./data/kanto151.sample.json",
   "./assets/home-hero.jpg",
   "./assets/fonts/press-start-2p.ttf"
@@ -33,6 +34,7 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
+
 
 
 

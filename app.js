@@ -7,6 +7,8 @@ const state = {
   roms: [],
   stream: null,
   scanning: false,
+  emu: null,
+  emuReady: false,
 };
 
 function $(id){ return document.getElementById(id); }
@@ -160,7 +162,7 @@ function renderWho(){
         <div class="muted small">${(p.types||[]).map(typeLabel).join(" / ")}</div>
       </div>
       <div class="actions">
-        <button class="mini" data-view="${p.id}">Ver Pokémon</button>
+        <button class="mini" data-view="${p.id}">Ver Pok?mon</button>
       </div>
     </div>
   `).join("");
@@ -186,24 +188,22 @@ function showWhoDetail(p){
   const modal = $("who-modal");
   const detail = $("who-detail");
   detail.innerHTML = `
-    <div class="modal-card">
+    <div class="modal-card emerald">
       <button class="modal-close" id="who-close">X</button>
-      <div class="profile-card">
-        <div class="profile-header">
-          <div class="thumb big">
-            <img src="${spriteUrl(p.id)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
-          </div>
-          <div>
-            <div class="profile-id">No.${p.id.toString().padStart(3,"0")}</div>
-            <div class="profile-name">${escapeHtml(p.name)}</div>
-            <div class="muted small">Tipos: ${(p.types||[]).map(typeLabel).join(" / ")}</div>
-          </div>
+      <div class="emerald-left">
+        <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
+        <div class="emerald-sprite">
+          <img src="${spriteUrl(p.id)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
         </div>
-        <div class="profile-body">
-          <div class="pill-row"><span class="label">Habilidade</span> ${abilities.slice(0,2).map(badge).join("")}</div>
-          <div class="pill-row"><span class="label">Golpes</span> ${moves.slice(0,4).map(badge).join("")}</div>
-          <div class="muted small note">Ficha estilo Emerald; habilidades/golpes são exemplos por tipo.</div>
-        </div>
+        <div class="emerald-name">${escapeHtml(p.name)}</div>
+        <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
+      </div>
+      <div class="emerald-right">
+        <div class="emerald-row header">PROFILE</div>
+        <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
+        <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "—"}</div>
+        <div class="emerald-row">PICKUP: <span class="muted small">May pick up items.</span></div>
+        <div class="emerald-row note"><strong>MEMO:</strong> Golpes: ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
       </div>
     </div>
   `;
@@ -287,9 +287,13 @@ function loadPokemonFromScan(){
   const box = $("scan-detail");
 
   if (!p){
-    box.innerHTML = `<div class="muted">Não encontrei o Pokémon com ID ${escapeHtml(id)}.</div>`;
+    box.innerHTML = `<div class="muted">N?o encontrei o Pok?mon com ID ${escapeHtml(id)}.</div>`;
     return;
   }
+
+  showWhoDetail(p);
+  setRoute("who");
+}
 
   box.innerHTML = `
     <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
@@ -300,8 +304,38 @@ function loadPokemonFromScan(){
 }
 
 /* ---------------------------
-   MÓDULO 3 (Emulador placeholder)
+   EMULADOR wasmBoy
 ---------------------------- */
+async function initEmu(){
+  if (state.emuReady) return;
+  try {
+    const mod = await import("./vendor/wasmboy.wasm.esm.js");
+    state.WasmBoy = mod.WasmBoy;
+    await state.WasmBoy.config({
+      headless: false,
+      gameboyFrameRate: 60,
+      graphicsPixelFormat: "RGBA",
+      isGbcEnabled: true,
+      html5Canvas: $("emu-canvas"),
+      audioBatchProcessing: true
+    });
+    await state.WasmBoy.setCanvas($("emu-canvas"));
+    state.emuReady = true;
+  } catch (e) {
+    console.error("Falha ao iniciar wasmBoy", e);
+  }
+}
+
+async function autoRunRom(arrayBuffer){
+  await initEmu();
+  if (!state.emuReady) return;
+  try {
+    await state.WasmBoy.loadROM(arrayBuffer);
+    await state.WasmBoy.play();
+  } catch (e) {
+    console.error("Erro ao executar ROM", e);
+  }
+}
 function loadRoms(){
   const raw = localStorage.getItem("roms");
   state.roms = raw ? JSON.parse(raw) : [];
@@ -346,11 +380,12 @@ async function addRom(){
   if (!inp.files || !inp.files[0]) return;
 
   const f = inp.files[0];
-  // Nota: para armazenar a ROM de verdade offline, precisamos IndexedDB (melhor do que localStorage).
-  // Aqui deixamos o esqueleto + autoexec placeholder.
-  state.roms.push({ name: f.name, note: "ROM adicionada (execução entra na fase do core emulada)." });
+  const arrayBuffer = await f.arrayBuffer();
+  // Nota: IndexedDB seria melhor para persistir; aqui guardamos metadados e rodamos autoexec com wasmBoy.
+  state.roms.push({ name: f.name, note: "ROM adicionada (autoexec wasmBoy)." });
   saveRoms();
   renderRoms();
+  autoRunRom(arrayBuffer);
   inp.value = "";
 }
 
@@ -425,6 +460,15 @@ async function registerSW(){
   await loadData();
   loadRoms();
 })();
+
+
+
+
+
+
+
+
+
 
 
 
