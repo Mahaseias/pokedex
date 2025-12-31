@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "pokedex-kanto-v11";
+﻿const CACHE_NAME = "pokedex-kanto-v12";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -34,6 +34,7 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
+
 
 
 

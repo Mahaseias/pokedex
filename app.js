@@ -7,8 +7,8 @@ const state = {
   roms: [],
   stream: null,
   scanning: false,
-  emu: null,
   emuReady: false,
+  WasmBoy: null,
 };
 
 function $(id){ return document.getElementById(id); }
@@ -27,10 +27,7 @@ function setRoute(route){
 }
 
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
-
-function spriteUrl(id){
-  return `./assets/sprites/${Number(id)}.gif`;
-}
+function spriteUrl(id){ return `./assets/sprites/${Number(id)}.gif`; }
 
 const TYPE_PT = {
   Grass:"Grama", Poison:"Veneno", Fire:"Fogo", Water:"Água", Normal:"Normal",
@@ -38,12 +35,11 @@ const TYPE_PT = {
   Rock:"Pedra", Ground:"Terra", Fighting:"Lutador", Bug:"Inseto",
   Ghost:"Fantasma", Dragon:"Dragão", Steel:"Aço", Fairy:"Fada"
 };
-
 function typeLabel(t){ return TYPE_PT[t] || t; }
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
   }[m]));
 }
 
@@ -141,7 +137,7 @@ function filterList({type, tag, q}){
 }
 
 /* ---------------------------
-   MÓDULO 1 (Who)
+   MÓDULO 1 (Pokédex)
 ---------------------------- */
 function renderWho(){
   const type = $("f-type").value;
@@ -162,7 +158,7 @@ function renderWho(){
         <div class="muted small">${(p.types||[]).map(typeLabel).join(" / ")}</div>
       </div>
       <div class="actions">
-        <button class="mini" data-view="${p.id}">Ver Pok?mon</button>
+        <button class="mini" data-view="${p.id}">Ver Pokémon</button>
       </div>
     </div>
   `).join("");
@@ -201,7 +197,7 @@ function showWhoDetail(p){
       <div class="emerald-right">
         <div class="emerald-row header">PROFILE</div>
         <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
-        <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "—"}</div>
+        <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
         <div class="emerald-row">PICKUP: <span class="muted small">May pick up items.</span></div>
         <div class="emerald-row note"><strong>MEMO:</strong> Golpes: ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
       </div>
@@ -223,8 +219,6 @@ function showWhoDetail(p){
 async function startCamera(){
   if (state.stream) return;
   const video = $("video");
-
-  // facingMode: environment tenta usar a câmera traseira.
   const constraints = { video: { facingMode: "environment" }, audio: false };
 
   state.stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -265,7 +259,6 @@ function scanLoop(){
     const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
 
     if (code && code.data){
-      // Esperamos que o QR contenha algo simples: "25" ou "pokemon_id=25"
       const raw = String(code.data).trim();
       const m = raw.match(/(\d{1,3})/);
       if (m){
@@ -284,23 +277,9 @@ function scanLoop(){
 function loadPokemonFromScan(){
   const id = Number($("scan-id").value);
   const p = state.pokedex.find(x => x.id === id);
-  const box = $("scan-detail");
-
-  if (!p){
-    box.innerHTML = `<div class="muted">N?o encontrei o Pok?mon com ID ${escapeHtml(id)}.</div>`;
-    return;
-  }
-
+  if (!p) return;
   showWhoDetail(p);
   setRoute("who");
-}
-
-  box.innerHTML = `
-    <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
-    <div class="muted">Tipos: ${(p.types||[]).map(escapeHtml).join(" / ")}</div>
-    <div class="muted">Tags: ${(p.tags||[]).map(escapeHtml).join(", ")}</div>
-    <div class="muted small">Próxima fase: anexar modelo 3D por ID e renderizar (Three.js).</div>
-  `;
 }
 
 /* ---------------------------
@@ -336,6 +315,7 @@ async function autoRunRom(arrayBuffer){
     console.error("Erro ao executar ROM", e);
   }
 }
+
 function loadRoms(){
   const raw = localStorage.getItem("roms");
   state.roms = raw ? JSON.parse(raw) : [];
@@ -381,7 +361,6 @@ async function addRom(){
 
   const f = inp.files[0];
   const arrayBuffer = await f.arrayBuffer();
-  // Nota: IndexedDB seria melhor para persistir; aqui guardamos metadados e rodamos autoexec com wasmBoy.
   state.roms.push({ name: f.name, note: "ROM adicionada (autoexec wasmBoy)." });
   saveRoms();
   renderRoms();
@@ -439,12 +418,10 @@ function wireUI(){
 }
 
 async function registerSW(){
-  // Mesmo rodando no Safari “normal”, o SW ajuda no offline após primeira carga.
   if ("serviceWorker" in navigator){
     try {
       await navigator.serviceWorker.register("./sw.js");
     } catch (e) {
-      // Se estiver sem HTTPS, isso falha.
       console.warn("SW não registrado:", e);
     }
   }
@@ -460,15 +437,3 @@ async function registerSW(){
   await loadData();
   loadRoms();
 })();
-
-
-
-
-
-
-
-
-
-
-
-
