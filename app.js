@@ -444,7 +444,10 @@ async function autoRunRom(arrayBuffer){
   if (!state.emuReady || !arrayBuffer) return;
   try {
     await state.WasmBoy.reset();
-    await state.WasmBoy.loadROMFromBuffer(arrayBuffer);
+
+    const romData = new Uint8Array(arrayBuffer);
+    await state.WasmBoy.loadROM(romData);
+
     await state.WasmBoy.play();
   } catch (e) {
     console.error("Erro ao executar ROM", e);
