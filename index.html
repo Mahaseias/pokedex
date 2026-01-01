@@ -147,9 +147,34 @@
         <div id="rom-list" class="list"></div>
 
         <h2>Área do Emulador</h2>
-        <div class="emuBox">
-          <canvas id="emu-canvas" width="320" height="288"></canvas>
-          <div class="muted small">Canvas 320×288 (GB/GBC). Controles na próxima fase.</div>
+        <div class="emu-shell" id="emu-shell">
+          <div class="emuBox">
+            <canvas id="emu-canvas" width="320" height="288"></canvas>
+            <div class="muted small">Canvas 320×288 (GB/GBC). Controles na próxima fase.</div>
+          </div>
+
+          <div class="emu-controls">
+            <div class="dpad">
+              <button class="pad-btn" data-key="up">▲</button>
+              <div class="dpad-middle">
+                <button class="pad-btn" data-key="left">◀</button>
+                <button class="pad-btn" data-key="right">▶</button>
+              </div>
+              <button class="pad-btn" data-key="down">▼</button>
+            </div>
+
+            <div class="action-buttons">
+              <button class="pad-btn action" data-key="b">B</button>
+              <button class="pad-btn action" data-key="a">A</button>
+            </div>
+          </div>
+
+          <div class="emu-start-row">
+            <button class="pad-btn small" data-key="select">Select</button>
+            <button class="pad-btn small" data-key="start">Start</button>
+            <button class="pad-btn small ghost" id="btn-emu-full">Tela cheia</button>
+            <button class="pad-btn small ghost" id="btn-emu-exit" disabled>Fechar tela cheia</button>
+          </div>
         </div>
       </div>
     </section>

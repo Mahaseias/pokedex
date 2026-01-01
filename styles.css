@@ -291,6 +291,59 @@ video{
   gap:8px;
 }
 #emu-canvas{width:100%; max-width:520px; border:1px solid var(--border); border-radius:10px; background:#000}
+.emu-shell{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+}
+.emu-controls{
+  display:flex;
+  gap:18px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.dpad{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+.dpad-middle{
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.pad-btn{
+  border:2px solid var(--border-strong);
+  background:linear-gradient(180deg, #12322f, #0b2624);
+  color:var(--text);
+  border-radius:10px;
+  padding:10px 14px;
+  min-width:44px;
+  font-family:var(--font-title);
+  cursor:pointer;
+  box-shadow:0 6px 12px rgba(0,0,0,.3);
+}
+.pad-btn.action{
+  background:linear-gradient(180deg, #7c1c2f, #4c0f1f);
+  min-width:54px;
+}
+.pad-btn.small{
+  padding:8px 10px;
+  min-width:60px;
+}
+.emu-start-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+@media (max-width: 640px){
+  .emu-controls{gap:12px;}
+  .pad-btn{min-width:40px; padding:8px 12px;}
+  .pad-btn.action{min-width:46px;}
+}
 
 /* Hero + menu */
 .hero{

@@ -594,6 +594,9 @@ function wireUI(){
       if (state.lastRomBuffer) autoRunRom(state.lastRomBuffer);
     });
   }
+
+  bindPadButtons();
+  bindFullscreen();
 }
 
 async function registerSW(){
@@ -616,4 +619,74 @@ async function registerSW(){
   await loadData();
   loadRoms();
 })();
+
+/* ---------------------------
+   Controles e Fullscreen
+---------------------------- */
+function sendKey(key, type){
+  const ev = new KeyboardEvent(type, { key, code: key, bubbles: true });
+  window.dispatchEvent(ev);
+}
+
+const PAD_MAP = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  a: "z",
+  b: "x",
+  start: "Enter",
+  select: "Shift"
+};
+
+function bindPadButtons(){
+  document.querySelectorAll(".pad-btn[data-key]").forEach(btn => {
+    const logical = btn.dataset.key;
+    const key = PAD_MAP[logical];
+    if (!key) return;
+    const down = (e) => { e.preventDefault(); sendKey(key, "keydown"); };
+    const up = (e) => { e.preventDefault(); sendKey(key, "keyup"); };
+    btn.addEventListener("mousedown", down);
+    btn.addEventListener("mouseup", up);
+    btn.addEventListener("mouseleave", up);
+    btn.addEventListener("touchstart", down, { passive:false });
+    btn.addEventListener("touchend", up);
+    btn.addEventListener("touchcancel", up);
+  });
+}
+
+function isFullscreen(){
+  return document.fullscreenElement && document.fullscreenElement.id === "emu-shell";
+}
+
+function updateFullscreenButtons(){
+  const fullBtn = $("btn-emu-full");
+  const exitBtn = $("btn-emu-exit");
+  const inFs = isFullscreen();
+  if (fullBtn) fullBtn.disabled = inFs;
+  if (exitBtn) exitBtn.disabled = !inFs;
+}
+
+function bindFullscreen(){
+  const shell = $("emu-shell");
+  const fullBtn = $("btn-emu-full");
+  const exitBtn = $("btn-emu-exit");
+  if (fullBtn && shell){
+    fullBtn.addEventListener("click", async () => {
+      if (!isFullscreen()){
+        await shell.requestFullscreen();
+        updateFullscreenButtons();
+      }
+    });
+  }
+  if (exitBtn){
+    exitBtn.addEventListener("click", async () => {
+      if (document.fullscreenElement){
+        await document.exitFullscreen();
+        updateFullscreenButtons();
+      }
+    });
+  }
+  document.addEventListener("fullscreenchange", updateFullscreenButtons);
+}
 
