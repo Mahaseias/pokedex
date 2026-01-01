@@ -34,7 +34,15 @@ body[data-route="home"] .container{max-width:100%; padding:0 0 0;}
 body[data-route="menu"] .tabs,
 body[data-route="menu"] .brand{display:none;}
 body[data-route="menu"] .burger-float{display:block;}
-body .burger-float{display:none;}
+body .burger-float{
+  display:block;
+  position:fixed;
+  right:14px;
+  top:14px;
+  z-index:20;
+  background:rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+}
 
 .topbar{
   position:sticky; top:0;
@@ -307,18 +315,20 @@ video{
   flex-direction:column;
   align-items:center;
   gap:16px;
-  padding:56px 16px 64px;
+  justify-content:flex-end;
+  padding:32px 16px 96px;
 }
 .start-btn{
   border:2px solid var(--accent);
-  background:rgba(255,255,255,.82);
+  background:rgba(255,255,255,.9);
   color:#1a1200;
   font-weight:800;
   padding:14px 22px;
   border-radius:14px;
   cursor:pointer;
   flex-wrap:wrap;
-  box-shadow:0 10px 20px rgba(0,0,0,.35);`n  backdrop-filter: blur(10px);
+  box-shadow:0 10px 20px rgba(0,0,0,.35);
+  backdrop-filter: blur(14px);
   min-width:200px;
   font-size:16px;
   font-family:var(--font-title);
@@ -326,23 +336,23 @@ video{
 
 .menu-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-  gap:12px;
+  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+  gap:14px;
 }
 .menu-toggle{display:flex; flex-direction:column; gap:8px; margin-bottom:12px;}
 .menu-icons{display:flex; gap:8px; flex-wrap:wrap;}
 .mini-card{
   display:flex;
   align-items:center;
-  gap:6px;
-  padding:8px 10px;
+  gap:10px;
+  padding:12px 12px;
   border:1px solid var(--border-strong);
-  border-radius:10px;
+  border-radius:12px;
   background:rgba(0,0,0,.12);
-  font-size:11px;
+  font-size:12px;
   cursor:pointer;
 }
-.mini-card img{width:28px; height:28px;}
+.mini-card img{width:48px; height:48px;}
 .burger{font-size:11px; padding:8px 10px;}
 .burger-float{
   position:absolute;

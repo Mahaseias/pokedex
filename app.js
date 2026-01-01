@@ -9,6 +9,8 @@ const state = {
   scanning: false,
   emuReady: false,
   WasmBoy: null,
+  lastRomBuffer: null,
+  ocrWorker: null,
 };
 
 function $(id){ return document.getElementById(id); }
@@ -29,11 +31,32 @@ function setRoute(route){
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
 function spriteUrl(id){ return `./assets/sprites/${Number(id)}.gif`; }
 
+function normalizeName(s){
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 const TYPE_PT = {
-  Grass:"Grama", Poison:"Veneno", Fire:"Fogo", Water:"Água", Normal:"Normal",
-  Flying:"Voador", Electric:"Elétrico", Psychic:"Psíquico", Ice:"Gelo",
-  Rock:"Pedra", Ground:"Terra", Fighting:"Lutador", Bug:"Inseto",
-  Ghost:"Fantasma", Dragon:"Dragão", Steel:"Aço", Fairy:"Fada"
+  Grass: "Grama",
+  Poison: "Veneno",
+  Fire: "Fogo",
+  Water: "Água",
+  Normal: "Normal",
+  Flying: "Voador",
+  Electric: "Elétrico",
+  Psychic: "Psíquico",
+  Ice: "Gelo",
+  Rock: "Pedra",
+  Ground: "Terra",
+  Fighting: "Lutador",
+  Bug: "Inseto",
+  Ghost: "Fantasma",
+  Dragon: "Dragão",
+  Steel: "Aço",
+  Fairy: "Fada"
 };
 function typeLabel(t){ return TYPE_PT[t] || t; }
 
@@ -152,7 +175,7 @@ function renderWho(){
     <div class="item" data-pid="${p.id}">
       <div class="thumb">
         <img src="${spriteUrl(p.id)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
-      </div>
+        </div>
       <div class="item-main">
         <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
         <div class="muted small">${(p.types||[]).map(typeLabel).join(" / ")}</div>
@@ -198,7 +221,7 @@ function showWhoDetail(p){
         <div class="emerald-row header">PROFILE</div>
         <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
         <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
-        <div class="emerald-row">PICKUP: <span class="muted small">May pick up items.</span></div>
+        <div class="emerald-row">PICKUP: <span class="muted small">Pode pegar itens.</span></div>
         <div class="emerald-row note"><strong>MEMO:</strong> Golpes: ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
       </div>
     </div>
@@ -214,7 +237,7 @@ function showWhoDetail(p){
 }
 
 /* ---------------------------
-   MÓDULO 2 (Scanner QR)
+   MÓDULO 2 (Scanner QR / Nome)
 ---------------------------- */
 async function startCamera(){
   if (state.stream) return;
@@ -227,6 +250,8 @@ async function startCamera(){
 
   $("btn-start").disabled = true;
   $("btn-stop").disabled = false;
+  $("btn-ocr").disabled = false;
+  $("btn-ocr-capture").disabled = false;
   $("scan-status").textContent = "Câmera ativa. Aponte para o QR Code...";
   state.scanning = true;
   scanLoop();
@@ -240,6 +265,8 @@ function stopCamera(){
   }
   $("btn-start").disabled = false;
   $("btn-stop").disabled = true;
+  $("btn-ocr").disabled = true;
+  $("btn-ocr-capture").disabled = true;
   $("scan-status").textContent = "Câmera parada.";
 }
 
@@ -268,18 +295,124 @@ function scanLoop(){
         loadPokemonFromScan();
         return;
       }
+      const pokeByName = findPokemon(raw);
+      if (pokeByName){
+        $("scan-name").value = pokeByName.name;
+        $("scan-status").textContent = `QR lido: ${raw}`;
+        stopCamera();
+        loadPokemonFromScan();
+        return;
+      }
     }
   }
 
   requestAnimationFrame(scanLoop);
 }
 
-function loadPokemonFromScan(){
-  const id = Number($("scan-id").value);
-  const p = state.pokedex.find(x => x.id === id);
+function loadPokemonFromInputs(preferName = false){
+  const nameVal = $("scan-name")?.value || "";
+  const idVal = $("scan-id")?.value || "";
+  const first = preferName ? nameVal : idVal;
+  const second = preferName ? idVal : nameVal;
+  let p = findPokemon(first);
+  if (!p) p = findPokemon(second);
   if (!p) return;
   showWhoDetail(p);
   setRoute("who");
+}
+
+function loadPokemonFromScan(){
+  loadPokemonFromInputs(false);
+}
+
+async function ensureOcr(){
+  if (state.ocrWorker) return state.ocrWorker;
+  if (!window.Tesseract || !window.Tesseract.createWorker) throw new Error("Tesseract não carregou.");
+  const worker = await window.Tesseract.createWorker({
+    workerPath: "./vendor/tesseract.worker.min.js",
+    corePath: "./vendor/tesseract-core-simd.wasm",
+    langPath: "./vendor",
+    logger: () => {}
+  });
+  await worker.load();
+  await worker.loadLanguage("eng");
+  await worker.initialize("eng");
+  state.ocrWorker = worker;
+  return worker;
+}
+
+function matchNameFromText(text){
+  const norm = normalizeName(text);
+  const tokens = norm.split(/[^a-z0-9]+/).filter(Boolean);
+  for (const tok of tokens){
+    const found = state.pokedex.find(p => normalizeName(p.name) === tok);
+    if (found) return found;
+  }
+  for (const p of state.pokedex){
+    if (norm.includes(normalizeName(p.name))) return p;
+  }
+  return null;
+}
+
+async function ocrSnapshot(opts = { autoStop: false }){
+  try{
+    const video = $("video");
+    if (!state.stream || video.readyState < 2){
+      $("scan-status").textContent = "Abra a câmera antes de usar OCR.";
+      return;
+    }
+    const canvas = $("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const srcW = Math.floor(video.videoWidth * 0.7);
+    const srcH = Math.floor(video.videoHeight * 0.22); // faixa ainda menor
+    const srcX = Math.floor((video.videoWidth - srcW) / 2);
+    const srcY = 0; // topo onde fica o nome
+    canvas.width = srcW;
+    canvas.height = srcH;
+    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+
+    // pré-processamento: escala de cinza + threshold simples
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = img.data;
+    for (let i = 0; i < data.length; i += 4){
+      const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      const v = g > 160 ? 255 : 0;
+      data[i] = data[i+1] = data[i+2] = v;
+    }
+    ctx.putImageData(img, 0, 0);
+
+    $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
+    const worker = await ensureOcr();
+    const { data: ocrData } = await worker.recognize(canvas);
+    const found = matchNameFromText(ocrData.text || "");
+    if (found){
+      $("scan-name").value = found.name;
+      $("scan-status").textContent = `Nome detectado: ${found.name}`;
+      showWhoDetail(found);
+      setRoute("who");
+      if (opts.autoStop) stopCamera();
+    } else {
+      $("scan-status").textContent = "Não reconheci um nome de Pokémon. Tente aproximar mais.";
+    }
+  } catch (e){
+    console.error(e);
+    $("scan-status").textContent = "Erro no OCR. Verifique se a câmera está aberta.";
+  }
+}
+async function captureAndOcr(){
+  await ocrSnapshot({ autoStop: true });
+}
+
+function findPokemon(val){
+  const raw = String(val || "").trim();
+  if (!raw) return null;
+  const byId = Number(raw);
+  if (!Number.isNaN(byId)){
+    const found = state.pokedex.find(x => x.id === byId);
+    if (found) return found;
+  }
+  const target = normalizeName(raw);
+  return state.pokedex.find(x => normalizeName(x.name) === target) || null;
 }
 
 /* ---------------------------
@@ -307,7 +440,7 @@ async function initEmu(){
 
 async function autoRunRom(arrayBuffer){
   await initEmu();
-  if (!state.emuReady) return;
+  if (!state.emuReady || !arrayBuffer) return;
   try {
     await state.WasmBoy.loadROM(arrayBuffer);
     await state.WasmBoy.play();
@@ -320,6 +453,7 @@ function loadRoms(){
   const raw = localStorage.getItem("roms");
   state.roms = raw ? JSON.parse(raw) : [];
   renderRoms();
+  updatePlayButton();
 }
 
 function saveRoms(){
@@ -351,6 +485,7 @@ function renderRoms(){
       state.roms.splice(idx, 1);
       saveRoms();
       renderRoms();
+      updatePlayButton();
     });
   });
 }
@@ -360,12 +495,45 @@ async function addRom(){
   if (!inp.files || !inp.files[0]) return;
 
   const f = inp.files[0];
-  const arrayBuffer = await f.arrayBuffer();
-  state.roms.push({ name: f.name, note: "ROM adicionada (autoexec wasmBoy)." });
+  const buf = await f.arrayBuffer();
+  let romBuffer = buf;
+  let romName = f.name;
+
+  // suporte a zip: tentar extrair primeiro .gb/.gbc/.gba
+  if (/\.(zip)$/i.test(f.name)){
+    if (window.fflate && fflate.unzipSync){
+      try{
+        const entries = fflate.unzipSync(new Uint8Array(buf));
+        const names = Object.keys(entries);
+        const pick = names.find(n => /\.(gbc?|gba)$/i.test(n));
+        if (pick){
+          romBuffer = entries[pick].buffer;
+          romName = pick;
+        } else {
+          console.warn("ZIP sem ROM .gb/.gbc/.gba");
+          $("scan-status").textContent = "ZIP não contém .gb/.gbc/.gba";
+        }
+      } catch (e){
+        console.error("Falha ao ler ZIP", e);
+        $("scan-status").textContent = "Falha ao descompactar ZIP";
+      }
+    }
+  }
+
+  state.lastRomBuffer = romBuffer;
+  state.roms.push({ name: romName, note: "ROM adicionada (autoexec wasmBoy)." });
   saveRoms();
   renderRoms();
-  autoRunRom(arrayBuffer);
+  updatePlayButton();
+  autoRunRom(romBuffer);
   inp.value = "";
+}
+
+function updatePlayButton(){
+  const btn = $("btn-play-rom");
+  if (btn){
+    btn.disabled = !state.lastRomBuffer;
+  }
 }
 
 /* ---------------------------
@@ -398,23 +566,29 @@ function wireUI(){
 
   $("btn-start").addEventListener("click", startCamera);
   $("btn-stop").addEventListener("click", stopCamera);
-  $("btn-load").addEventListener("click", loadPokemonFromScan);
+  $("btn-ocr").addEventListener("click", ocrSnapshot);
+  $("btn-ocr-capture").addEventListener("click", captureAndOcr);
+  $("btn-load").addEventListener("click", () => loadPokemonFromInputs(false));
+  $("btn-load-name").addEventListener("click", () => loadPokemonFromInputs(true));
   $("btn-open-dex").addEventListener("click", () => {
-    const id = Number($("scan-id").value);
-    const p = state.pokedex.find(x => x.id === id);
-    if (p){
-      showWhoDetail(p);
-      setRoute("who");
-    }
+    loadPokemonFromInputs(true);
   });
 
   $("btn-add-rom").addEventListener("click", addRom);
   $("rom-file").addEventListener("change", addRom);
   $("btn-clear-roms").addEventListener("click", () => {
     state.roms = [];
+    state.lastRomBuffer = null;
     saveRoms();
     renderRoms();
+    updatePlayButton();
   });
+  const playBtn = $("btn-play-rom");
+  if (playBtn){
+    playBtn.addEventListener("click", () => {
+      if (state.lastRomBuffer) autoRunRom(state.lastRomBuffer);
+    });
+  }
 }
 
 async function registerSW(){

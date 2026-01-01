@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "pokedex-kanto-v12";
+﻿const CACHE_NAME = "pokedex-kanto-v16";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,11 @@ const CORE_ASSETS = [
   "./app.js",
   "./manifest.json",
   "./vendor/jsqr.min.js",
+  "./vendor/tesseract.min.js",
+  "./vendor/tesseract.worker.min.js",
+  "./vendor/tesseract-core-simd.wasm",
+  "./vendor/eng.traineddata.gz",
+  "./vendor/fflate.min.js",
   "./vendor/wasmboy.wasm.esm.js",
   "./data/kanto151.sample.json",
   "./assets/home-hero.jpg",
@@ -34,8 +39,3 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
-
-
-
-
-

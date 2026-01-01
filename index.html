@@ -6,19 +6,11 @@
   <meta name="theme-color" content="#0b1220" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
-  <title>Pokédex Kanto (Offline + QR)</title>
+  <title>Pokédex Kanto (Offline)</title>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Pokédex Kanto</div>
-    <nav class="tabs">
-      <button class="tab" data-route="home">Home</button>
-      <button class="tab" data-route="menu">Menu</button>
-      <button class="tab" data-route="who">Pokédex</button>
-      <button class="tab" data-route="scan">Ler Card (QR)</button>
-      <button class="tab" data-route="emu">Emulador</button>
-    </nav>
-    <button class="mini burger burger-float" data-route="menu">≡ Menu</button>
+    <button class="mini burger burger-float" id="menu-toggle-btn" data-route="menu">≡ Menu</button>
   </header>
 
   <main class="container">
@@ -31,32 +23,32 @@
     <section id="view-menu" class="view hidden">
       <h1>Menu</h1>
       <div class="menu-toggle">
-        <button class="mini burger" id="menu-toggle-btn">≡ Menu</button>
-        <div class="menu-icons">
-          <div class="mini-card" data-goto="home"><img src="./assets/sprites/1.gif" alt="Home" /> Home</div>
-          <div class="mini-card" data-goto="who"><img src="./assets/sprites/25.gif" alt="Pikachu" /> Pokédex</div>
-          <div class="mini-card" data-goto="scan"><img src="./assets/sprites/39.gif" alt="Jigglypuff" /> QR</div>
-          <div class="mini-card" data-goto="emu"><img src="./assets/sprites/150.gif" alt="Mewtwo" /> Emulador</div>
-        </div>
+        <p class="muted small">Toque no sanduíche "≡ Menu" para mostrar ou esconder os módulos.</p>
       </div>
       <div class="menu-grid menu-hidden" id="menu-grid">
-        <div class="menu-card">
-          <div class="menu-label">Módulo 1</div>
-          <div class="menu-title">Quem sou?</div>
-          <p class="muted small">Filtre e abra ficha rápida com tipos, habilidades e golpes.</p>
-          <button class="primary" data-goto="who">Abrir</button>
+        <div class="menu-card mini-card" data-goto="who">
+          <img src="./assets/sprites/25.gif" alt="Pikachu" />
+          <div>
+            <div class="menu-label">Módulo 1</div>
+            <div class="menu-title">Pokédex</div>
+            <p class="muted small">Filtre e abra ficha rápida com tipos, habilidades e golpes.</p>
+          </div>
         </div>
-        <div class="menu-card">
-          <div class="menu-label">Módulo 2</div>
-          <div class="menu-title">Scanner QR</div>
-          <p class="muted small">Câmera + QR para carregar o Pokémon por ID.</p>
-          <button class="primary" data-goto="scan">Abrir</button>
+        <div class="menu-card mini-card" data-goto="scan">
+          <img src="./assets/sprites/39.gif" alt="QR" />
+          <div>
+            <div class="menu-label">Módulo 2</div>
+            <div class="menu-title">Scanner</div>
+            <p class="muted small">Câmera ou busca por nome/ID para carregar o Pokémon.</p>
+          </div>
         </div>
-        <div class="menu-card">
-          <div class="menu-label">Módulo 3</div>
-          <div class="menu-title">Emulador</div>
-          <p class="muted small">Importe ROM e prepare o canvas do core (fase 2).</p>
-          <button class="primary" data-goto="emu">Abrir</button>
+        <div class="menu-card mini-card" data-goto="emu">
+          <img src="./assets/sprites/150.gif" alt="Gamepad" />
+          <div>
+            <div class="menu-label">Módulo 3</div>
+            <div class="menu-title">Emulador</div>
+            <p class="muted small">Importe ROM e use Play ROM (autoexec com wasmBoy).</p>
+          </div>
         </div>
       </div>
     </section>
@@ -93,15 +85,14 @@
     </section>
 
     <section id="view-scan" class="view hidden">
-      <h1>Ler Card (QR Code)</h1>
+      <h1>Ler Card (Nome ou ID)</h1>
       <p class="muted">
-        A câmera funciona via <code>getUserMedia</code> (permissão do usuário).
-        Use HTTPS (GitHub Pages) para evitar bloqueios.
+        Opção 1: digite o nome que aparece no card (ex.: Zapdos). Opção 2: digite o ID.
       </p>
 
       <div class="grid2">
         <div class="card">
-          <h2>Câmera</h2>
+          <h2>Câmera (opcional)</h2>
           <div class="videoWrap">
             <video id="video" playsinline></video>
             <canvas id="canvas" class="hidden"></canvas>
@@ -109,24 +100,28 @@
           <div class="row">
             <button class="primary" id="btn-start">Iniciar câmera</button>
             <button class="ghost" id="btn-stop" disabled>Parar</button>
+            <button class="ghost" id="btn-ocr" disabled>Ler nome (OCR)</button>
+            <button class="ghost" id="btn-ocr-capture" disabled>Foto + OCR</button>
           </div>
           <p class="muted small" id="scan-status">Aguardando...</p>
         </div>
 
         <div class="card">
-          <h2>Resultado</h2>
+          <h2>Buscar</h2>
           <div class="field">
-            <label>pokemon_id (do QR)</label>
-            <input id="scan-id" placeholder="Ex.: 25" />
+            <label>Nome do Pokémon</label>
+            <input id="scan-name" placeholder="Ex.: zapdos" />
+          </div>
+          <div class="field">
+            <label>ID (opcional)</label>
+            <input id="scan-id" placeholder="Ex.: 145" />
           </div>
           <div class="row">
-            <button class="primary" id="btn-load">Carregar Pokémon</button>
+            <button class="primary" id="btn-load-name">Buscar por nome</button>
+            <button class="ghost" id="btn-load">Buscar por ID</button>
             <button class="ghost" id="btn-open-dex">Abrir na Pokédex</button>
           </div>
           <div id="scan-detail" class="detail"></div>
-          <p class="muted small">
-            Observação: o iOS Safari não suporta bem a Barcode Detection API, por isso usamos biblioteca JS (jsQR).
-          </p>
         </div>
       </div>
     </section>
@@ -134,8 +129,7 @@
     <section id="view-emu" class="view hidden">
       <h1>Emulador (placeholder)</h1>
       <p class="muted">
-        Nesta etapa, deixamos a UI pronta: importar ROM, listar, e preparar área do canvas.
-        O core do emulador (GB/GBC primeiro) entra depois.
+        Importar ROM, listar e rodar direto com wasmBoy (GB/GBC). Controles entram na próxima fase.
       </p>
 
       <div class="card">
@@ -146,6 +140,7 @@
         <div class="row">
           <button class="primary" id="btn-add-rom">Adicionar ROM</button>
           <button class="ghost" id="btn-clear-roms">Limpar lista</button>
+          <button class="primary" id="btn-play-rom">Play ROM</button>
         </div>
 
         <h2>ROMs</h2>
@@ -160,6 +155,8 @@
     </section>
   </main>
 
+  <script defer src="./vendor/tesseract.min.js"></script>
+  <script defer src="./vendor/fflate.min.js"></script>
   <script defer src="./vendor/jsqr.min.js"></script>
   <script defer src="./app.js"></script>
 </body>
