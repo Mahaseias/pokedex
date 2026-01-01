@@ -429,7 +429,8 @@ async function initEmu(){
       graphicsPixelFormat: "RGBA",
       isGbcEnabled: true,
       html5Canvas: $("emu-canvas"),
-      audioBatchProcessing: true
+      audioBatchProcessing: true,
+      allowFetch: false
     });
     await state.WasmBoy.setCanvas($("emu-canvas"));
     state.emuReady = true;
@@ -442,7 +443,8 @@ async function autoRunRom(arrayBuffer){
   await initEmu();
   if (!state.emuReady || !arrayBuffer) return;
   try {
-    await state.WasmBoy.loadROM(arrayBuffer);
+    await state.WasmBoy.reset();
+    await state.WasmBoy.loadROMFromBuffer(arrayBuffer);
     await state.WasmBoy.play();
   } catch (e) {
     console.error("Erro ao executar ROM", e);
