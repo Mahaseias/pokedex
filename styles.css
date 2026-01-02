@@ -280,69 +280,121 @@ video{
   object-fit:cover;
 }
 
-.emuBox{
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-  background:rgba(0,0,0,.18);
-  margin-top:8px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-#emu-canvas{width:100%; max-width:520px; border:1px solid var(--border); border-radius:10px; background:#000}
+/* Quadro do emulador */
 .emu-shell{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:center;
+  position: relative;
+  width: min(92vw, 520px);
+  margin: 0 auto;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(0,0,0,.18);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset;
 }
+
+/* Canvas central, responsivo */
+#emu-canvas{
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 320 / 288;
+  border-radius: 12px;
+  background: #000;
+}
+
+/* Botão fullscreen (canto superior direito dentro do quadro) */
+.emu-fs{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 30;
+  width: 52px;
+  height: 42px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.25);
+  color: #eaffff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Camada de controles dentro do quadro */
 .emu-controls{
-  display:flex;
-  gap:18px;
-  justify-content:center;
-  flex-wrap:wrap;
+  position: absolute;
+  inset: 14px;           /* respeita o padding do shell */
+  pointer-events: none;  /* só os botões recebem clique */
 }
+
+/* Botões básicos */
+.emu-controls .k{
+  pointer-events: auto;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.18);
+  color: #eaffff;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+/* D-pad: canto inferior esquerdo */
 .dpad{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
+  position: absolute;
+  left: 10px;
+  bottom: 14px;
+  width: 118px;
+  height: 118px;
 }
-.dpad-middle{
-  display:flex;
-  gap:6px;
-  align-items:center;
+
+.dpad .k{
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 18px;
 }
-.pad-btn{
-  border:2px solid var(--border-strong);
-  background:linear-gradient(180deg, #12322f, #0b2624);
-  color:var(--text);
-  border-radius:10px;
-  padding:10px 14px;
-  min-width:44px;
-  font-family:var(--font-title);
-  cursor:pointer;
-  box-shadow:0 6px 12px rgba(0,0,0,.3);
+
+.dpad .up{   top: 0; left: 39px; }
+.dpad .left{ top: 39px; left: 0; }
+.dpad .right{top: 39px; left: 78px; }
+.dpad .down{ top: 78px; left: 39px; }
+
+/* A/B: canto inferior direito */
+.ab{
+  position: absolute;
+  right: 10px;
+  bottom: 18px;
+  display: flex;
+  gap: 10px;
 }
-.pad-btn.action{
-  background:linear-gradient(180deg, #7c1c2f, #4c0f1f);
-  min-width:54px;
+
+.ab .k{
+  width: 56px;
+  height: 40px;
+  border-radius: 14px;
+  font-size: 16px;
 }
-.pad-btn.small{
-  padding:8px 10px;
-  min-width:60px;
+
+/* Start/Select: centro inferior */
+.ss{
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
 }
-.emu-start-row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
+
+.ss .k{
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 13px;
 }
-@media (max-width: 640px){
-  .emu-controls{gap:12px;}
-  .pad-btn{min-width:40px; padding:8px 12px;}
-  .pad-btn.action{min-width:46px;}
+
+/* Quando estiver em fullscreen, aproveita a tela */
+:fullscreen .emu-shell{
+  width: min(96vw, 900px);
 }
 
 /* Hero + menu */

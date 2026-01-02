@@ -148,32 +148,26 @@
 
         <h2>Área do Emulador</h2>
         <div class="emu-shell" id="emu-shell">
-          <div class="emuBox">
-            <canvas id="emu-canvas" width="320" height="288"></canvas>
-            <div class="muted small">Canvas 320×288 (GB/GBC). Controles na próxima fase.</div>
-          </div>
+          <button class="emu-fs" id="btn-fs" aria-label="Tela cheia / Janela">⛶</button>
+          <canvas id="emu-canvas" width="320" height="288"></canvas>
 
           <div class="emu-controls">
             <div class="dpad">
-              <button class="pad-btn" data-key="up">▲</button>
-              <div class="dpad-middle">
-                <button class="pad-btn" data-key="left">◀</button>
-                <button class="pad-btn" data-key="right">▶</button>
-              </div>
-              <button class="pad-btn" data-key="down">▼</button>
+              <button class="k up" data-key="up" aria-label="Cima">▲</button>
+              <button class="k left" data-key="left" aria-label="Esquerda">◀</button>
+              <button class="k right" data-key="right" aria-label="Direita">▶</button>
+              <button class="k down" data-key="down" aria-label="Baixo">▼</button>
             </div>
 
-            <div class="action-buttons">
-              <button class="pad-btn action" data-key="b">B</button>
-              <button class="pad-btn action" data-key="a">A</button>
+            <div class="ab">
+              <button class="k b" data-key="b" aria-label="B">B</button>
+              <button class="k a" data-key="a" aria-label="A">A</button>
             </div>
-          </div>
 
-          <div class="emu-start-row">
-            <button class="pad-btn small" data-key="select">Select</button>
-            <button class="pad-btn small" data-key="start">Start</button>
-            <button class="pad-btn small ghost" id="btn-emu-full">Tela cheia</button>
-            <button class="pad-btn small ghost" id="btn-emu-exit" disabled>Fechar tela cheia</button>
+            <div class="ss">
+              <button class="k select" data-key="select" aria-label="Select">Select</button>
+              <button class="k start" data-key="start" aria-label="Start">Start</button>
+            </div>
           </div>
         </div>
       </div>
