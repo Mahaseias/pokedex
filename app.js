@@ -582,9 +582,9 @@ async function addRom(){
 }
 
 const PRELOADED_ROMS = [
-  // Adicione aqui arquivos em ./roms/ no repo
+  // Coloque os arquivos na pasta ./roms/ (commit no repo)
   { name: "Pokémon Yellow", path: "./roms/pokemon-yellow.gbc" },
-  { name: "Pokémon Blue", path: "./roms/pokemon-blue.gbc" }
+  { name: "Pokémon Blue", path: "./roms/pokemon-blue.gbc" },
 ];
 
 async function loadPreloadedRom(){
