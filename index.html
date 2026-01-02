@@ -11,6 +11,7 @@
 <body>
   <header class="topbar">
     <button class="mini burger burger-float" id="menu-toggle-btn" data-route="menu">≡ Menu</button>
+    <div class="version-badge" id="app-version">v23</div>
   </header>
 
   <main class="container">
@@ -25,7 +26,7 @@
       <div class="menu-toggle">
         <p class="muted small">Toque no sanduíche "≡ Menu" para mostrar ou esconder os módulos.</p>
       </div>
-      <div class="menu-grid menu-hidden" id="menu-grid">
+      <div class="menu-grid" id="menu-grid">
         <div class="menu-card mini-card" data-goto="who">
           <img src="./assets/sprites/25.gif" alt="Pikachu" />
           <div>
@@ -85,14 +86,14 @@
     </section>
 
     <section id="view-scan" class="view hidden">
-      <h1>Ler Card (Nome ou ID)</h1>
+      <h1>Ler Card (Foto)</h1>
       <p class="muted">
-        Opção 1: digite o nome que aparece no card (ex.: Zapdos). Opção 2: digite o ID.
+        Tire uma foto focando o nome do card. O OCR tentará reconhecer e abrir o Pokémon.
       </p>
 
       <div class="grid2">
         <div class="card">
-          <h2>Câmera (opcional)</h2>
+          <h2>Câmera</h2>
           <div class="videoWrap">
             <video id="video" playsinline></video>
             <canvas id="canvas" class="hidden"></canvas>
@@ -100,28 +101,9 @@
           <div class="row">
             <button class="primary" id="btn-start">Iniciar câmera</button>
             <button class="ghost" id="btn-stop" disabled>Parar</button>
-            <button class="ghost" id="btn-ocr" disabled>Ler nome (OCR)</button>
             <button class="ghost" id="btn-ocr-capture" disabled>Foto + OCR</button>
           </div>
           <p class="muted small" id="scan-status">Aguardando...</p>
-        </div>
-
-        <div class="card">
-          <h2>Buscar</h2>
-          <div class="field">
-            <label>Nome do Pokémon</label>
-            <input id="scan-name" placeholder="Ex.: zapdos" />
-          </div>
-          <div class="field">
-            <label>ID (opcional)</label>
-            <input id="scan-id" placeholder="Ex.: 145" />
-          </div>
-          <div class="row">
-            <button class="primary" id="btn-load-name">Buscar por nome</button>
-            <button class="ghost" id="btn-load">Buscar por ID</button>
-            <button class="ghost" id="btn-open-dex">Abrir na Pokédex</button>
-          </div>
-          <div id="scan-detail" class="detail"></div>
         </div>
       </div>
     </section>
@@ -136,6 +118,16 @@
         <div class="field">
           <label>Importar ROM (arquivo local)</label>
           <input id="rom-file" type="file" />
+        </div>
+        <div class="field">
+          <label>ROMs pré-carregadas</label>
+          <div class="row">
+            <select id="rom-preloaded">
+              <option value="">(escolha uma ROM pré-carregada)</option>
+            </select>
+            <button class="primary" id="btn-load-pre">Carregar ROM pré</button>
+          </div>
+          <p class="muted small">As ROMs são buscadas em ./roms/ (adicione os arquivos lá no repo).</p>
         </div>
         <div class="row">
           <button class="primary" id="btn-add-rom">Adicionar ROM</button>

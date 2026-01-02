@@ -53,6 +53,12 @@ function setRoute(route){
     btn.classList.toggle("active", btn.dataset.route === route);
   }
   history.replaceState({}, "", `#${route}`);
+
+  // abrir menu expandido por padrão
+  if (route === "menu"){
+    const grid = $("menu-grid");
+    if (grid) grid.classList.remove("menu-hidden");
+  }
 }
 
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
@@ -261,6 +267,16 @@ function showWhoDetail(p){
   modal.addEventListener("click", (e) => {
     if (e.target === modal) modal.classList.remove("open");
   }, { once:true });
+
+  // Leitura em voz (pokeDex style)
+  if ("speechSynthesis" in window){
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const text = `Número ${p.id}. ${p.name}. Tipos: ${(p.types||[]).join(", ")}. Golpes: ${moves.slice(0,4).join(", ")}.`;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "pt-BR";
+    synth.speak(utter);
+  }
 }
 
 /* ---------------------------
@@ -277,7 +293,6 @@ async function startCamera(){
 
   $("btn-start").disabled = true;
   $("btn-stop").disabled = false;
-  $("btn-ocr").disabled = false;
   $("btn-ocr-capture").disabled = false;
   $("scan-status").textContent = "Câmera ativa. Aponte para o QR Code...";
   state.scanning = true;
@@ -292,7 +307,6 @@ function stopCamera(){
   }
   $("btn-start").disabled = false;
   $("btn-stop").disabled = true;
-  $("btn-ocr").disabled = true;
   $("btn-ocr-capture").disabled = true;
   $("scan-status").textContent = "Câmera parada.";
 }
@@ -567,6 +581,30 @@ async function addRom(){
   inp.value = "";
 }
 
+const PRELOADED_ROMS = [
+  // Adicione aqui arquivos em ./roms/ no repo
+  { name: "Pokémon Yellow", path: "./roms/pokemon-yellow.gbc" },
+  { name: "Pokémon Blue", path: "./roms/pokemon-blue.gbc" }
+];
+
+async function loadPreloadedRom(){
+  const sel = $("rom-preloaded");
+  const val = sel?.value;
+  if (!val) return;
+  try{
+    const res = await fetch(val);
+    const buf = await res.arrayBuffer();
+    state.lastRomBuffer = buf;
+    state.roms.push({ name: val.split("/").pop(), note: "ROM pré-carregada" });
+    saveRoms();
+    renderRoms();
+    updatePlayButton();
+    autoRunRom(buf);
+  } catch (e){
+    console.error("Falha ao carregar ROM pré", e);
+  }
+}
+
 function updatePlayButton(){
   const btn = $("btn-play-rom");
   if (btn){
@@ -604,16 +642,11 @@ function wireUI(){
 
   $("btn-start").addEventListener("click", startCamera);
   $("btn-stop").addEventListener("click", stopCamera);
-  $("btn-ocr").addEventListener("click", ocrSnapshot);
   $("btn-ocr-capture").addEventListener("click", captureAndOcr);
-  $("btn-load").addEventListener("click", () => loadPokemonFromInputs(false));
-  $("btn-load-name").addEventListener("click", () => loadPokemonFromInputs(true));
-  $("btn-open-dex").addEventListener("click", () => {
-    loadPokemonFromInputs(true);
-  });
 
   $("btn-add-rom").addEventListener("click", addRom);
   $("rom-file").addEventListener("change", addRom);
+  $("btn-load-pre").addEventListener("click", loadPreloadedRom);
   $("btn-clear-roms").addEventListener("click", () => {
     state.roms = [];
     state.lastRomBuffer = null;
