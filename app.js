@@ -17,6 +17,29 @@ const state = {
   },
 };
 
+// Mapeia data-key -> botões lógicos do Game Boy
+const PAD_LOGICAL = {
+  up: "UP",
+  down: "DOWN",
+  left: "LEFT",
+  right: "RIGHT",
+  a: "A",
+  b: "B",
+  start: "START",
+  select: "SELECT"
+};
+// Fallback teclado caso a API do wasmBoy não esteja disponível
+const PAD_KEYBOARD = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  a: "z",
+  b: "x",
+  start: "Enter",
+  select: "Shift"
+};
+
 function $(id){ return document.getElementById(id); }
 
 function setRoute(route){
@@ -636,29 +659,6 @@ function sendKey(key, type){
   const ev = new KeyboardEvent(type, { key, code: key, bubbles: true });
   window.dispatchEvent(ev);
 }
-
-// mapeamento lógico -> wasmBoy
-const PAD_LOGICAL = {
-  up: "UP",
-  down: "DOWN",
-  left: "LEFT",
-  right: "RIGHT",
-  a: "A",
-  b: "B",
-  start: "START",
-  select: "SELECT"
-};
-// fallback para teclado
-const PAD_KEYBOARD = {
-  up: "ArrowUp",
-  down: "ArrowDown",
-  left: "ArrowLeft",
-  right: "ArrowRight",
-  a: "z",
-  b: "x",
-  start: "Enter",
-  select: "Shift"
-};
 
 function getWasmBoyInputAdapter(){
   const WB = state.WasmBoy;
