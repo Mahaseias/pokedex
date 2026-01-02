@@ -628,7 +628,19 @@ function sendKey(key, type){
   window.dispatchEvent(ev);
 }
 
-const PAD_MAP = {
+// mapeamento lógico -> wasmBoy
+const PAD_LOGICAL = {
+  up: "UP",
+  down: "DOWN",
+  left: "LEFT",
+  right: "RIGHT",
+  a: "A",
+  b: "B",
+  start: "START",
+  select: "SELECT"
+};
+// fallback para teclado
+const PAD_KEYBOARD = {
   up: "ArrowUp",
   down: "ArrowDown",
   left: "ArrowLeft",
@@ -639,54 +651,71 @@ const PAD_MAP = {
   select: "Shift"
 };
 
+function getWasmBoyInputAdapter(){
+  const WB = state.WasmBoy;
+  if (!WB) return null;
+  const candidates = [
+    (down, key) => (WB.setJoypadButton ? WB.setJoypadButton(key, down) : undefined),
+    (down, key) => (WB.setJoypadState ? WB.setJoypadState({ [key]: down }) : undefined),
+    (down, key) => (down && WB.pressKey ? WB.pressKey(key) : undefined),
+    (down, key) => (!down && WB.releaseKey ? WB.releaseKey(key) : undefined),
+    (down, key) => (down && WB.keyDown ? WB.keyDown(key) : undefined),
+    (down, key) => (!down && WB.keyUp ? WB.keyUp(key) : undefined),
+    (down, key) => (down && WB.setKeyDown ? WB.setKeyDown(key) : undefined),
+    (down, key) => (!down && WB.setKeyUp ? WB.setKeyUp(key) : undefined),
+  ];
+  return (down, logicalKey) => {
+    for (const fn of candidates){
+      try {
+        const out = fn(down, logicalKey);
+        if (out !== undefined || fn.toString().includes("WB.")) return;
+      } catch (_){}
+    }
+  };
+}
+
 function bindPadButtons(){
-  document.querySelectorAll(".pad-btn[data-key]").forEach(btn => {
+  document.querySelectorAll(".emu-controls [data-key]").forEach(btn => {
     const logical = btn.dataset.key;
-    const key = PAD_MAP[logical];
-    if (!key) return;
-    const down = (e) => { e.preventDefault(); sendKey(key, "keydown"); };
-    const up = (e) => { e.preventDefault(); sendKey(key, "keyup"); };
-    btn.addEventListener("mousedown", down);
-    btn.addEventListener("mouseup", up);
-    btn.addEventListener("mouseleave", up);
-    btn.addEventListener("touchstart", down, { passive:false });
-    btn.addEventListener("touchend", up);
-    btn.addEventListener("touchcancel", up);
+    if (!logical) return;
+    const down = (e) => {
+      e.preventDefault();
+      btn.setPointerCapture?.(e.pointerId);
+      const adapter = getWasmBoyInputAdapter();
+      if (adapter && PAD_LOGICAL[logical]) adapter(true, PAD_LOGICAL[logical]);
+      else if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keydown");
+    };
+    const up = (e) => {
+      e.preventDefault();
+      const adapter = getWasmBoyInputAdapter();
+      if (adapter && PAD_LOGICAL[logical]) adapter(false, PAD_LOGICAL[logical]);
+      else if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keyup");
+    };
+    btn.addEventListener("pointerdown", down);
+    btn.addEventListener("pointerup", up);
+    btn.addEventListener("pointercancel", up);
+    btn.addEventListener("pointerleave", up);
   });
-}
-
-function isFullscreen(){
-  return document.fullscreenElement && document.fullscreenElement.id === "emu-shell";
-}
-
-function updateFullscreenButtons(){
-  const fullBtn = $("btn-emu-full");
-  const exitBtn = $("btn-emu-exit");
-  const inFs = isFullscreen();
-  if (fullBtn) fullBtn.disabled = inFs;
-  if (exitBtn) exitBtn.disabled = !inFs;
 }
 
 function bindFullscreen(){
   const shell = $("emu-shell");
-  const fullBtn = $("btn-emu-full");
-  const exitBtn = $("btn-emu-exit");
-  if (fullBtn && shell){
-    fullBtn.addEventListener("click", async () => {
-      if (!isFullscreen()){
-        await shell.requestFullscreen();
-        updateFullscreenButtons();
-      }
-    });
-  }
-  if (exitBtn){
-    exitBtn.addEventListener("click", async () => {
-      if (document.fullscreenElement){
-        await document.exitFullscreen();
-        updateFullscreenButtons();
-      }
-    });
-  }
-  document.addEventListener("fullscreenchange", updateFullscreenButtons);
+  const fsBtn = $("btn-fs");
+  if (!shell || !fsBtn) return;
+
+  const toggle = async () => {
+    try{
+      if (!document.fullscreenElement) await shell.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch (e){
+      console.warn("Fullscreen falhou", e);
+    }
+  };
+  const updateIcon = () => {
+    fsBtn.textContent = document.fullscreenElement ? "🗗" : "⛶";
+  };
+  fsBtn.addEventListener("click", (e) => { e.preventDefault(); toggle(); });
+  document.addEventListener("fullscreenchange", updateIcon);
+  updateIcon();
 }
 
