@@ -433,7 +433,13 @@ async function initEmu(){
       allowFetch: false
     });
     await state.WasmBoy.setCanvas($("emu-canvas"));
+    const canvas = $("emu-canvas");
+    if (canvas){
+      canvas.tabIndex = 0;
+      canvas.addEventListener("click", () => canvas.focus());
+    }
     state.emuReady = true;
+    bindPadButtons(); // agora com WasmBoy pronto
   } catch (e) {
     console.error("Falha ao iniciar wasmBoy", e);
   }
@@ -595,7 +601,6 @@ function wireUI(){
     });
   }
 
-  bindPadButtons();
   bindFullscreen();
 }
 
