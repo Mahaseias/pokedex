@@ -11,6 +11,10 @@ const state = {
   WasmBoy: null,
   lastRomBuffer: null,
   ocrWorker: null,
+  joypadState: {
+    up:false, down:false, left:false, right:false,
+    A:false, B:false, START:false, SELECT:false
+  },
 };
 
 function $(id){ return document.getElementById(id); }
@@ -661,7 +665,13 @@ function getWasmBoyInputAdapter(){
   if (!WB) return null;
   const candidates = [
     (down, key) => (WB.setJoypadButton ? WB.setJoypadButton(key, down) : undefined),
-    (down, key) => (WB.setJoypadState ? WB.setJoypadState({ [key]: down }) : undefined),
+    (down, key) => {
+      if (WB.setJoypadState){
+        state.joypadState[key] = down;
+        return WB.setJoypadState({ ...state.joypadState });
+      }
+      return undefined;
+    },
     (down, key) => (down && WB.pressKey ? WB.pressKey(key) : undefined),
     (down, key) => (!down && WB.releaseKey ? WB.releaseKey(key) : undefined),
     (down, key) => (down && WB.keyDown ? WB.keyDown(key) : undefined),
