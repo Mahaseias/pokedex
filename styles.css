@@ -327,7 +327,7 @@ video{
   width:100%;
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:10px;
   pointer-events:auto;
 }
 
@@ -346,14 +346,14 @@ video{
 /* D-pad: canto inferior esquerdo */
 .dpad{
   display:grid;
-  grid-template-columns: repeat(3, 38px);
-  grid-template-rows: repeat(3, 38px);
-  gap:4px;
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows: repeat(3, 34px);
+  gap:3px;
 }
 
 .dpad .k{
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
   font-size: 18px;
 }
@@ -365,37 +365,46 @@ video{
 
 /* A/B: canto inferior direito */
 .ab{
-  display: flex;
-  gap: 10px;
-  align-items:center;
+  position: relative;
+  width: 120px;
+  height: 90px;
 }
 
 .ab .k{
-  width: 54px;
+  position:absolute;
+  width: 52px;
   height: 38px;
   border-radius: 14px;
-  font-size: 16px;
+  font-size: 15px;
+}
+.ab .b{
+  top: 0;
+  right: 12px;
+}
+.ab .a{
+  bottom: 4px;
+  left: 10px;
 }
 
 /* Start/Select: centro inferior */
 .ss{
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content:center;
 }
 
 .ss .k{
-  padding: 8px 12px;
-  border-radius: 14px;
-  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 
 .emu-row{
   display:flex;
   width:100%;
   justify-content:space-between;
-  align-items:center;
-  gap:12px;
+  align-items:flex-end;
+  gap:10px;
 }
 
 @media (max-width: 640px){
@@ -403,9 +412,7 @@ video{
     flex-direction:column;
     align-items:center;
   }
-  .ab{
-    gap:8px;
-  }
+  .ab{width:120px; height:90px;}
 }
 
 /* Quando estiver em fullscreen, aproveita a tela */
