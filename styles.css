@@ -302,7 +302,8 @@ video{
   box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset;
   display:flex;
   flex-direction:column;
-  gap:16px;
+  gap:12px;
+  align-items:center;
 }
 
 /* Canvas central, responsivo */
@@ -336,9 +337,10 @@ video{
 .emu-controls{
   position: relative;
   width:100%;
+  max-width:520px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:12px;
   pointer-events:auto;
   align-items:center;
 }
@@ -381,6 +383,7 @@ video{
   position: relative;
   width: 120px;
   height: 90px;
+  margin-left: 14px;
 }
 
 .ab .k{
@@ -404,6 +407,7 @@ video{
   display: flex;
   gap: 8px;
   justify-content:center;
+  margin-top:6px;
 }
 
 .ss .k{
@@ -416,9 +420,11 @@ video{
   display:flex;
   width:100%;
   justify-content:space-between;
-  align-items:flex-end;
-  gap:10px;
-  flex-wrap:wrap;
+  align-items:center;
+  gap:16px;
+  flex-wrap:nowrap;
+  max-width: 460px;
+  margin: 0 auto;
 }
 
 @media (max-width: 640px){

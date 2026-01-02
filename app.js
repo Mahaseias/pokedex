@@ -294,7 +294,7 @@ async function startCamera(){
   $("btn-start").disabled = true;
   $("btn-stop").disabled = false;
   $("btn-ocr-capture").disabled = false;
-  $("scan-status").textContent = "Câmera ativa. Aponte para o QR Code...";
+  $("scan-status").textContent = "Câmera ativa. Centralize o nome do card e toque em Foto + OCR.";
   state.scanning = true;
   scanLoop();
 }
@@ -330,40 +330,27 @@ function scanLoop(){
       const raw = String(code.data).trim();
       const m = raw.match(/(\d{1,3})/);
       if (m){
-        $("scan-id").value = m[1];
-        $("scan-status").textContent = `QR lido: ${raw}`;
-        stopCamera();
-        loadPokemonFromScan();
-        return;
+        const pokeById = findPokemon(m[1]);
+        if (pokeById){
+          $("scan-status").textContent = `QR lido: ${raw}`;
+          stopCamera();
+          showWhoDetail(pokeById);
+          setRoute("who");
+          return;
+        }
       }
       const pokeByName = findPokemon(raw);
       if (pokeByName){
-        $("scan-name").value = pokeByName.name;
         $("scan-status").textContent = `QR lido: ${raw}`;
         stopCamera();
-        loadPokemonFromScan();
+        showWhoDetail(pokeByName);
+        setRoute("who");
         return;
       }
     }
   }
 
   requestAnimationFrame(scanLoop);
-}
-
-function loadPokemonFromInputs(preferName = false){
-  const nameVal = $("scan-name")?.value || "";
-  const idVal = $("scan-id")?.value || "";
-  const first = preferName ? nameVal : idVal;
-  const second = preferName ? idVal : nameVal;
-  let p = findPokemon(first);
-  if (!p) p = findPokemon(second);
-  if (!p) return;
-  showWhoDetail(p);
-  setRoute("who");
-}
-
-function loadPokemonFromScan(){
-  loadPokemonFromInputs(false);
 }
 
 async function ensureOcr(){
@@ -427,7 +414,6 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const { data: ocrData } = await worker.recognize(canvas);
     const found = matchNameFromText(ocrData.text || "");
     if (found){
-      $("scan-name").value = found.name;
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       showWhoDetail(found);
       setRoute("who");
@@ -583,9 +569,22 @@ async function addRom(){
 
 const PRELOADED_ROMS = [
   // Coloque os arquivos na pasta ./roms/ (commit no repo)
+  { name: "Pokémon Red", path: "./roms/Pokemon Red.gb" },
   { name: "Pokémon Yellow", path: "./roms/pokemon-yellow.gbc" },
   { name: "Pokémon Blue", path: "./roms/pokemon-blue.gbc" },
 ];
+
+function populatePreloadedSelect(){
+  const sel = $("rom-preloaded");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">(escolha uma ROM pré-carregada)</option>';
+  for (const rom of PRELOADED_ROMS){
+    const opt = document.createElement("option");
+    opt.value = rom.path;
+    opt.textContent = rom.name;
+    sel.appendChild(opt);
+  }
+}
 
 async function loadPreloadedRom(){
   const sel = $("rom-preloaded");
@@ -629,7 +628,12 @@ function wireUI(){
   const toggle = $("menu-toggle-btn");
   if (toggle){
     toggle.addEventListener("click", () => {
-      $("menu-grid").classList.toggle("menu-hidden");
+      if (document.body.dataset.route === "menu"){
+        $("menu-grid").classList.toggle("menu-hidden");
+      } else {
+        setRoute("menu");
+        $("menu-grid").classList.remove("menu-hidden");
+      }
     });
   }
   document.querySelectorAll(".mini-card[data-goto]").forEach(card => {
@@ -661,7 +665,9 @@ function wireUI(){
     });
   }
 
+  bindPadButtons();
   bindFullscreen();
+  populatePreloadedSelect();
 }
 
 async function registerSW(){
