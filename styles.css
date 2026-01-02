@@ -289,6 +289,9 @@ video{
   border-radius: 18px;
   background: rgba(0,0,0,.18);
   box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
 /* Canvas central, responsivo */
@@ -320,14 +323,16 @@ video{
 
 /* Camada de controles dentro do quadro */
 .emu-controls{
-  position: absolute;
-  inset: 14px;           /* respeita o padding do shell */
-  pointer-events: none;  /* só os botões recebem clique */
+  position: relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-items:center;
+  pointer-events:auto;
 }
 
 /* Botões básicos */
 .emu-controls .k{
-  pointer-events: auto;
   border-radius: 12px;
   border: 2px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.18);
@@ -340,31 +345,26 @@ video{
 
 /* D-pad: canto inferior esquerdo */
 .dpad{
-  position: absolute;
-  left: 10px;
-  bottom: 14px;
-  width: 118px;
-  height: 118px;
+  display:grid;
+  grid-template-columns: repeat(3, 40px);
+  grid-template-rows: repeat(3, 40px);
+  gap:4px;
 }
 
 .dpad .k{
-  position: absolute;
   width: 40px;
   height: 40px;
   border-radius: 12px;
   font-size: 18px;
 }
 
-.dpad .up{   top: 0; left: 39px; }
-.dpad .left{ top: 39px; left: 0; }
-.dpad .right{top: 39px; left: 78px; }
-.dpad .down{ top: 78px; left: 39px; }
+.dpad .up{ grid-column:2; grid-row:1; }
+.dpad .left{ grid-column:1; grid-row:2; }
+.dpad .right{ grid-column:3; grid-row:2; }
+.dpad .down{ grid-column:2; grid-row:3; }
 
 /* A/B: canto inferior direito */
 .ab{
-  position: absolute;
-  right: 10px;
-  bottom: 18px;
   display: flex;
   gap: 10px;
 }
@@ -378,10 +378,6 @@ video{
 
 /* Start/Select: centro inferior */
 .ss{
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
   display: flex;
   gap: 10px;
 }
