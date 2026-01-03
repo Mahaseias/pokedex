@@ -39,6 +39,12 @@ const PAD_KEYBOARD = {
   start: "Enter",
   select: "Shift"
 };
+const PAD_ALT_KEYS = {
+  a: ["z", "x", "KeyZ", "KeyX"],
+  b: ["x", "z", "KeyX", "KeyZ"],
+  start: ["Enter", "Return"],
+  select: ["Shift", "Backspace", "Space"]
+};
 
 function $(id){ return document.getElementById(id); }
 
@@ -725,6 +731,9 @@ function sendKey(key, type){
   const ev = new KeyboardEvent(type, { key, code: key, bubbles: true });
   window.dispatchEvent(ev);
 }
+function sendKeyList(keys, type){
+  for (const k of keys) sendKey(k, type);
+}
 
 function getWasmBoyInputAdapter(){
   const WB = state.WasmBoy;
@@ -766,21 +775,25 @@ function getWasmBoyInputAdapter(){
 }
 
 function bindPadButtons(){
+  const canvas = $("emu-canvas");
   document.querySelectorAll(".emu-controls [data-key]").forEach(btn => {
     const logical = btn.dataset.key;
     if (!logical) return;
     const down = (e) => {
       e.preventDefault();
       btn.setPointerCapture?.(e.pointerId);
+      canvas?.focus();
       const adapter = getWasmBoyInputAdapter();
       if (adapter && PAD_LOGICAL[logical]) adapter(true, PAD_LOGICAL[logical]);
       if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keydown");
+      if (PAD_ALT_KEYS[logical]) sendKeyList(PAD_ALT_KEYS[logical], "keydown");
     };
     const up = (e) => {
       e.preventDefault();
       const adapter = getWasmBoyInputAdapter();
       if (adapter && PAD_LOGICAL[logical]) adapter(false, PAD_LOGICAL[logical]);
       if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keyup");
+      if (PAD_ALT_KEYS[logical]) sendKeyList(PAD_ALT_KEYS[logical], "keyup");
     };
     btn.addEventListener("pointerdown", down);
     btn.addEventListener("pointerup", up);
