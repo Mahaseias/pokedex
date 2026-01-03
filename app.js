@@ -497,11 +497,13 @@ async function ocrSnapshot(opts = { autoStop: false }){
       $("scan-status").textContent = "Abra a câmera antes de usar OCR.";
       return;
     }
-    // faixa mais estreita e alta: foco só no nome
-    const srcW = Math.floor(video.videoWidth * 0.68);
-    const srcH = Math.floor(video.videoHeight * 0.18);
-    const srcX = Math.floor((video.videoWidth - srcW) / 2);
-    const srcY = Math.floor(video.videoHeight * 0.02); // um pouco abaixo do topo
+    // ROI baseado na moldura (mesma proporção do CSS)
+    const scaleX = video.videoWidth / (video.offsetWidth || video.videoWidth);
+    const scaleY = video.videoHeight / (video.offsetHeight || video.videoHeight);
+    const srcX = Math.floor((video.offsetWidth * 0.10) * scaleX);
+    const srcY = Math.floor((video.offsetHeight * 0.15) * scaleY);
+    const srcW = Math.floor((video.offsetWidth * 0.80) * scaleX);
+    const srcH = Math.floor(60 * scaleY);
 
     // duas variações: normal e invertida
     const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: false });
@@ -519,6 +521,16 @@ async function ocrSnapshot(opts = { autoStop: false }){
           tessedit_pageseg_mode: "7"
         });
         if (ocrData.text) texts.push(ocrData.text);
+
+        // render preview
+        const preview = $("previewCanvas");
+        if (preview){
+          preview.width = canvas.width;
+          preview.height = canvas.height;
+          const pctx = preview.getContext("2d");
+          pctx.clearRect(0,0,preview.width,preview.height);
+          pctx.drawImage(canvas,0,0);
+        }
       } catch (errWorker){
         console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
         if (window.Tesseract && window.Tesseract.recognize){
@@ -544,10 +556,14 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const found = matchNameFromText(texts.join(" "));
     if (found){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
+      const displayResultado = $("resultadoNome");
+      if (displayResultado) displayResultado.innerText = `Sucesso: ${found.name}`;
       showWhoDetail(found);
       setRoute("who");
       if (opts.autoStop) stopCamera();
     } else {
+      const displayResultado = $("resultadoNome");
+      if (displayResultado) displayResultado.innerText = "Não reconhecido. Tente novamente.";
       $("scan-status").textContent = "Não reconheci um nome de Pokémon. Tente aproximar mais.";
     }
   } catch (e){

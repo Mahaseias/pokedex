@@ -94,14 +94,22 @@
       <div class="grid2">
         <div class="card">
           <h2>Câmera</h2>
-          <div class="videoWrap">
+          <div class="camera-container">
             <video id="video" playsinline></video>
+            <div class="overlay">
+              <div class="focus-region"></div>
+            </div>
             <canvas id="canvas" class="hidden"></canvas>
           </div>
           <div class="row">
             <button class="primary" id="btn-start">Iniciar câmera</button>
             <button class="ghost" id="btn-stop" disabled>Parar</button>
             <button class="ghost" id="btn-ocr-capture" disabled>Foto + OCR</button>
+          </div>
+          <div class="preview-box">
+            <p class="muted small">O que o OCR está vendo:</p>
+            <canvas id="previewCanvas"></canvas>
+            <h2 id="resultadoNome" class="muted">...</h2>
           </div>
           <p class="muted small" id="scan-status">Aguardando...</p>
         </div>
