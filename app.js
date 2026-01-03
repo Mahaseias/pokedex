@@ -503,6 +503,7 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const video = $("video");
     if (!state.stream || video.readyState < 2){
       $("scan-status").textContent = "Abra a câmera antes de usar OCR.";
+      console.warn("OCR abortado: vídeo não pronto", { readyState: video.readyState });
       return;
     }
     // ROI baseado na moldura (mesma proporção do CSS)
@@ -514,6 +515,13 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const srcY = Math.floor((displayH * 0.15) * scaleY);
     const srcW = Math.floor((displayW * 0.80) * scaleX);
     const srcH = Math.floor(60 * scaleY);
+
+    console.log("OCR ROI", { video: { vw: video.videoWidth, vh: video.videoHeight, ow: displayW, oh: displayH }, crop: { srcX, srcY, srcW, srcH }, ready: video.readyState });
+    if (srcW <= 0 || srcH <= 0){
+      console.error("OCR ROI inválido", { srcX, srcY, srcW, srcH });
+      $("scan-status").textContent = "Erro no recorte do OCR. Tente reiniciar a câmera.";
+      return;
+    }
 
     // duas variações: normal e invertida
     const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: false });
