@@ -237,6 +237,7 @@ function renderWho(){
 function showWhoDetail(p){
   const abilities = fallbackAbilities(p);
   const moves = fallbackMoves(p);
+  const summary = makeSummary(p, moves, abilities);
   const modal = $("who-modal");
   const detail = $("who-detail");
   detail.innerHTML = `
@@ -256,6 +257,7 @@ function showWhoDetail(p){
         <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
         <div class="emerald-row">PICKUP: <span class="muted small">Pode pegar itens.</span></div>
         <div class="emerald-row note"><strong>MEMO:</strong> Golpes: ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
+        <div class="emerald-row note"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
       </div>
     </div>
   `;
@@ -272,11 +274,18 @@ function showWhoDetail(p){
   if ("speechSynthesis" in window){
     const synth = window.speechSynthesis;
     synth.cancel();
-    const text = `Número ${p.id}. ${p.name}. Tipos: ${(p.types||[]).join(", ")}. Golpes: ${moves.slice(0,4).join(", ")}.`;
+    const text = `Número ${p.id}. ${p.name}. Tipos: ${(p.types||[]).map(typeLabel).join(", ")}. Golpes: ${moves.slice(0,4).join(", ")}. ${summary}`;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "pt-BR";
     synth.speak(utter);
   }
+}
+
+function makeSummary(p, moves, abilities){
+  const tipos = (p.types||[]).map(typeLabel).join(" e ") || "desconhecido";
+  const golpes = moves.slice(0,3).join(", ");
+  const hab = abilities.slice(0,1).join(", ") || "habilidade não informada";
+  return `${p.name} é um Pokémon do tipo ${tipos}, conhecido por golpes como ${golpes}. Habilidade comum: ${hab}.`;
 }
 
 /* ---------------------------
@@ -568,10 +577,8 @@ async function addRom(){
 }
 
 const PRELOADED_ROMS = [
-  // Coloque os arquivos na pasta ./roms/ (commit no repo)
-  { name: "Pokémon Red", path: "./roms/Pokemon Red.gb" },
-  { name: "Pokémon Yellow", path: "./roms/pokemon-yellow.gbc" },
-  { name: "Pokémon Blue", path: "./roms/pokemon-blue.gbc" },
+  // Arquivos que já estão na pasta ./roms/ (adicione mais e eles aparecerão na lista)
+  { name: "Pokémon Red (local)", path: "./roms/Pokemon Red.gb" },
 ];
 
 function populatePreloadedSelect(){
@@ -628,12 +635,8 @@ function wireUI(){
   const toggle = $("menu-toggle-btn");
   if (toggle){
     toggle.addEventListener("click", () => {
-      if (document.body.dataset.route === "menu"){
-        $("menu-grid").classList.toggle("menu-hidden");
-      } else {
-        setRoute("menu");
-        $("menu-grid").classList.remove("menu-hidden");
-      }
+      setRoute("menu");
+      $("menu-grid").classList.remove("menu-hidden");
     });
   }
   document.querySelectorAll(".mini-card[data-goto]").forEach(card => {
