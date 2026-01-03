@@ -353,6 +353,15 @@ function fuzzyBest(text){
   return null;
 }
 
+// Similaridade 0..1 baseada em Levenshtein
+function similarity(a, b){
+  const longer = a.length >= b.length ? a : b;
+  const shorter = a.length >= b.length ? b : a;
+  if (!longer.length) return 1;
+  const dist = levenshtein(longer, shorter);
+  return (longer.length - dist) / longer.length;
+}
+
 /* ---------------------------
    MÓDULO 2 (Scanner QR / Nome)
 ---------------------------- */
@@ -483,19 +492,35 @@ function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
 }
 
 function matchNameFromText(text){
-  const norm = normalizeName(text);
-  const tokens = norm.split(/[^a-z0-9]+/).filter(Boolean);
+  const normRaw = normalizeName(text);
+  const tokens = normRaw.split(/[^a-z0-9]+/).filter(Boolean);
+  const lowerRaw = normRaw.toLowerCase();
+
   // 1) match exato por token
   for (const tok of tokens){
     const found = state.pokedex.find(p => normalizeName(p.name) === tok);
     if (found) return found;
   }
-  // 2) match por substring
+  // 2) substring direta (resolve "Venusaur ex", "Zapdos da Equipe Rocket")
   for (const p of state.pokedex){
-    if (norm.includes(normalizeName(p.name))) return p;
+    const target = normalizeName(p.name);
+    if (lowerRaw.includes(target)) return p;
   }
-  // 3) fuzzy: pegar melhor distância entre tokens e nomes
-  return fuzzyBest(norm);
+  // 3) fuzzy palavra a palavra (tolerante a Venu5aur)
+  let best = null;
+  let bestScore = 0;
+  for (const word of tokens){
+    for (const p of state.pokedex){
+      const s = similarity(word, normalizeName(p.name));
+      if (s > bestScore){
+        bestScore = s;
+        best = p;
+      }
+    }
+  }
+  if (best && bestScore >= 0.7) return best;
+  // 4) fallback geral
+  return fuzzyBest(normRaw);
 }
 
 async function ocrSnapshot(opts = { autoStop: false }){
@@ -574,7 +599,9 @@ async function ocrSnapshot(opts = { autoStop: false }){
     await readCanvas(canvasNormal);
     await readCanvas(canvasInvert);
 
-    const found = matchNameFromText(texts.join(" "));
+    const rawText = texts.join(" ").trim();
+    console.log("OCR bruto:", rawText);
+    const found = matchNameFromText(rawText);
     if (found){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       const displayResultado = $("resultadoNome");
