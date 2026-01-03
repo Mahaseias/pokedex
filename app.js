@@ -475,36 +475,28 @@ async function ocrSnapshot(opts = { autoStop: false }){
       $("scan-status").textContent = "Abra a câmera antes de usar OCR.";
       return;
     }
-    const canvas = $("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     // faixa mais estreita e alta: foco só no nome
     const srcW = Math.floor(video.videoWidth * 0.68);
     const srcH = Math.floor(video.videoHeight * 0.18);
     const srcX = Math.floor((video.videoWidth - srcW) / 2);
     const srcY = Math.floor(video.videoHeight * 0.02); // um pouco abaixo do topo
-    // upscaling para ajudar o OCR
-    const scale = 2.2;
+
+    // canvas temporário só para OCR
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const scale = 2.5; // upscale forte
     canvas.width = Math.floor(srcW * scale);
     canvas.height = Math.floor(srcH * scale);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
 
-    // pré-processamento: escala de cinza + contraste + threshold adaptativo simples
+    // binarização agressiva (preto/branco) para OCR
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = img.data;
-    let sum = 0;
-    let count = 0;
+    const threshFixed = 128;
     for (let i = 0; i < data.length; i += 4){
-      const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-      sum += g; count++;
-    }
-    const avg = sum / count || 128;
-    const thresh = Math.min(255, Math.max(60, avg * 0.8)); // mais agressivo
-    const gain = 1.35;
-    for (let i = 0; i < data.length; i += 4){
-      let g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-      g = Math.max(0, Math.min(255, (g - 128) * gain + 128));
-      const v = g > thresh ? 255 : 0;
+      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+      const v = avg < threshFixed ? 0 : 255;
       data[i] = data[i+1] = data[i+2] = v;
     }
     ctx.putImageData(img, 0, 0);
