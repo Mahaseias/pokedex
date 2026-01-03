@@ -774,13 +774,13 @@ function bindPadButtons(){
       btn.setPointerCapture?.(e.pointerId);
       const adapter = getWasmBoyInputAdapter();
       if (adapter && PAD_LOGICAL[logical]) adapter(true, PAD_LOGICAL[logical]);
-      else if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keydown");
+      if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keydown");
     };
     const up = (e) => {
       e.preventDefault();
       const adapter = getWasmBoyInputAdapter();
       if (adapter && PAD_LOGICAL[logical]) adapter(false, PAD_LOGICAL[logical]);
-      else if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keyup");
+      if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keyup");
     };
     btn.addEventListener("pointerdown", down);
     btn.addEventListener("pointerup", up);
@@ -796,14 +796,20 @@ function bindFullscreen(){
 
   const toggle = async () => {
     try{
-      if (!document.fullscreenElement) await shell.requestFullscreen();
-      else await document.exitFullscreen();
+      if (!document.fullscreenElement){
+        await shell.requestFullscreen();
+        shell.classList.add("fullscreen");
+      } else {
+        await document.exitFullscreen();
+        shell.classList.remove("fullscreen");
+      }
     } catch (e){
       console.warn("Fullscreen falhou", e);
     }
   };
   const updateIcon = () => {
     fsBtn.textContent = document.fullscreenElement ? "🗗" : "⛶";
+    if (!document.fullscreenElement) shell.classList.remove("fullscreen");
   };
   fsBtn.addEventListener("click", (e) => { e.preventDefault(); toggle(); });
   document.addEventListener("fullscreenchange", updateIcon);

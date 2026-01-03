@@ -314,6 +314,7 @@ video{
   aspect-ratio: 320 / 288;
   border-radius: 12px;
   background: #000;
+  object-fit: contain;
 }
 
 /* Botão fullscreen (canto superior direito dentro do quadro) */
@@ -437,7 +438,15 @@ video{
 
 /* Quando estiver em fullscreen, aproveita a tela */
 :fullscreen .emu-shell{
-  width: min(96vw, 900px);
+  width: 100vw;
+  height: 100vh;
+}
+:fullscreen .emu-shell #emu-canvas{
+  width: auto;
+  height: calc(100vh - 220px);
+  max-width: 98vw;
+  max-height: 90vh;
+  margin: 0 auto;
 }
 
 /* Hero + menu */
