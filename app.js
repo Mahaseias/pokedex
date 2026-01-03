@@ -305,6 +305,47 @@ function speakSummary(p, summary){
   synth.speak(utter);
 }
 
+// ---------- Fuzzy helper ----------
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for (let i=0;i<=m;i++) dp[i][0] = i;
+  for (let j=0;j<=n;j++) dp[0][j] = j;
+  for (let i=1;i<=m;i++){
+    for (let j=1;j<=n;j++){
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i-1][j] + 1,
+        dp[i][j-1] + 1,
+        dp[i-1][j-1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+function fuzzyBest(text){
+  if (!text) return null;
+  const names = state.pokedex || [];
+  let best = null;
+  let bestScore = Infinity;
+  const normText = normalizeName(text);
+  for (const p of names){
+    const normName = normalizeName(p.name);
+    const d = levenshtein(normText, normName);
+    if (d < bestScore){
+      bestScore = d;
+      best = p;
+    }
+  }
+  if (best && bestScore <= Math.max(2, Math.ceil(best.name.length * 0.3))){
+    return best;
+  }
+  return null;
+}
+
 /* ---------------------------
    MÓDULO 2 (Scanner QR / Nome)
 ---------------------------- */
@@ -403,14 +444,17 @@ async function ensureOcr(){
 function matchNameFromText(text){
   const norm = normalizeName(text);
   const tokens = norm.split(/[^a-z0-9]+/).filter(Boolean);
+  // 1) match exato por token
   for (const tok of tokens){
     const found = state.pokedex.find(p => normalizeName(p.name) === tok);
     if (found) return found;
   }
+  // 2) match por substring
   for (const p of state.pokedex){
     if (norm.includes(normalizeName(p.name))) return p;
   }
-  return null;
+  // 3) fuzzy: pegar melhor distância entre tokens e nomes
+  return fuzzyBest(norm);
 }
 
 async function ocrSnapshot(opts = { autoStop: false }){
@@ -422,10 +466,11 @@ async function ocrSnapshot(opts = { autoStop: false }){
     }
     const canvas = $("canvas");
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    const srcW = Math.floor(video.videoWidth * 0.75);
-    const srcH = Math.floor(video.videoHeight * 0.25); // faixa do topo
+    // faixa mais estreita e alta: foco só no nome
+    const srcW = Math.floor(video.videoWidth * 0.68);
+    const srcH = Math.floor(video.videoHeight * 0.18);
     const srcX = Math.floor((video.videoWidth - srcW) / 2);
-    const srcY = 0; // topo onde fica o nome
+    const srcY = Math.floor(video.videoHeight * 0.02); // um pouco abaixo do topo
     canvas.width = srcW;
     canvas.height = srcH;
     ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
@@ -440,7 +485,7 @@ async function ocrSnapshot(opts = { autoStop: false }){
       sum += g; count++;
     }
     const avg = sum / count || 128;
-    const thresh = Math.min(255, Math.max(80, avg * 0.9));
+    const thresh = Math.min(255, Math.max(60, avg * 0.8)); // mais agressivo
     for (let i = 0; i < data.length; i += 4){
       const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
       const v = g > thresh ? 255 : 0;
