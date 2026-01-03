@@ -526,6 +526,12 @@ async function ocrSnapshot(opts = { autoStop: false }){
           tessedit_pageseg_mode: "7"
         });
         ocrText = res.data?.text || "";
+      } else if (window.OCRAD){
+        try{
+          ocrText = window.OCRAD(canvas) || "";
+        } catch (errO){
+          console.warn("OCRAD falhou:", errO);
+        }
       } else {
         throw errWorker;
       }
