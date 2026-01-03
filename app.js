@@ -295,9 +295,10 @@ function speakSummary(p, summary){
   const voices = synth.getVoices();
   const pickVoice = () => {
     const ptVoices = voices.filter(v => (v.lang||"").toLowerCase().startsWith("pt"));
-    // prefer feminino em pt-BR se existir
-    const female = ptVoices.find(v => /female|feminina|mulher/i.test(v.name)) ||
+    // preferência: nomes que sugerem feminina e pt-BR
+    const female = ptVoices.find(v => /female|feminina|mulher|pt-?br/i.test(v.name)) ||
                    ptVoices.find(v => /br/i.test(v.lang)) ||
+                   ptVoices.find(v => /pt/i.test(v.lang)) ||
                    ptVoices[0];
     return female || null;
   };
@@ -307,7 +308,7 @@ function speakSummary(p, summary){
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = chosen?.lang || "pt-BR";
   if (chosen) utter.voice = chosen;
-  utter.rate = 0.95;
+  utter.rate = 0.9;
   utter.pitch = 1;
   synth.speak(utter);
 }
@@ -518,7 +519,7 @@ function matchNameFromText(text){
       }
     }
   }
-  if (best && bestScore >= 0.7) return best;
+  if (best && bestScore >= 0.5) return best;
   // 4) fallback geral
   return fuzzyBest(normRaw);
 }
