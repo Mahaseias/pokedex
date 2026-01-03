@@ -296,9 +296,10 @@ function speakSummary(p, summary){
   const pickVoice = () => {
     const ptVoices = voices.filter(v => (v.lang||"").toLowerCase().startsWith("pt"));
     // preferência: nomes que sugerem feminina e pt-BR
-    const female = ptVoices.find(v => /female|feminina|mulher|pt-?br/i.test(v.name)) ||
+    const female = ptVoices.find(v => /female|feminina|mulher|pt-?br|brasil/i.test(v.name)) ||
                    ptVoices.find(v => /br/i.test(v.lang)) ||
                    ptVoices.find(v => /pt/i.test(v.lang)) ||
+                   ptVoices.find(v => /maria|camila|ana|carla/i.test(v.name)) ||
                    ptVoices[0];
     return female || null;
   };
@@ -380,6 +381,18 @@ async function startCamera(){
   };
 
   state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+  // tenta aplicar zoom 2x se suportado
+  try{
+    const [track] = state.stream.getVideoTracks();
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.zoom){
+      const newZoom = Math.min(caps.max || 2, 2);
+      await track.applyConstraints({ advanced: [{ zoom: newZoom }] });
+    }
+  } catch(e){
+    console.warn("Zoom não aplicado", e);
+  }
+
   video.srcObject = state.stream;
   await video.play();
 
