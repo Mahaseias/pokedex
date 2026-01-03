@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   "./vendor/tesseract.worker.min.js",
   "./vendor/tesseract-core-simd.wasm",
   "./vendor/eng.traineddata.gz",
+  "./vendor/por.traineddata.gz",
   "./vendor/fflate.min.js",
   "./vendor/wasmboy.wasm.esm.js",
   "./data/kanto151.sample.json",

@@ -383,8 +383,13 @@ async function ensureOcr(){
     logger: () => {}
   });
   await worker.load();
-  await worker.loadLanguage("eng");
-  await worker.initialize("eng");
+  try{
+    await worker.loadLanguage("eng+por");
+    await worker.initialize("eng+por");
+  } catch (_){
+    await worker.loadLanguage("eng");
+    await worker.initialize("eng");
+  }
   state.ocrWorker = worker;
   return worker;
 }
@@ -411,20 +416,28 @@ async function ocrSnapshot(opts = { autoStop: false }){
     }
     const canvas = $("canvas");
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    const srcW = Math.floor(video.videoWidth * 0.7);
-    const srcH = Math.floor(video.videoHeight * 0.22); // faixa ainda menor
+    const srcW = Math.floor(video.videoWidth * 0.75);
+    const srcH = Math.floor(video.videoHeight * 0.25); // faixa do topo
     const srcX = Math.floor((video.videoWidth - srcW) / 2);
     const srcY = 0; // topo onde fica o nome
     canvas.width = srcW;
     canvas.height = srcH;
     ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
 
-    // pré-processamento: escala de cinza + threshold simples
+    // pré-processamento: escala de cinza + threshold adaptativo simples
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = img.data;
+    let sum = 0;
+    let count = 0;
     for (let i = 0; i < data.length; i += 4){
       const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-      const v = g > 160 ? 255 : 0;
+      sum += g; count++;
+    }
+    const avg = sum / count || 128;
+    const thresh = Math.min(255, Math.max(80, avg * 0.9));
+    for (let i = 0; i < data.length; i += 4){
+      const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      const v = g > thresh ? 255 : 0;
       data[i] = data[i+1] = data[i+2] = v;
     }
     ctx.putImageData(img, 0, 0);
