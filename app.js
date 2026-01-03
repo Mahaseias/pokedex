@@ -293,14 +293,21 @@ function speakSummary(p, summary){
   synth.cancel();
 
   const voices = synth.getVoices();
-  const chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt-br")) ||
-                 voices.find(v => v.lang.toLowerCase().startsWith("pt"));
+  const pickVoice = () => {
+    const ptVoices = voices.filter(v => (v.lang||"").toLowerCase().startsWith("pt"));
+    // prefer feminino em pt-BR se existir
+    const female = ptVoices.find(v => /female|feminina|mulher/i.test(v.name)) ||
+                   ptVoices.find(v => /br/i.test(v.lang)) ||
+                   ptVoices[0];
+    return female || null;
+  };
+  const chosen = pickVoice();
 
   const text = `Número ${p.id}. ${p.name}. ${summary}`;
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = chosen?.lang || "pt-BR";
   if (chosen) utter.voice = chosen;
-  utter.rate = 1;
+  utter.rate = 0.95;
   utter.pitch = 1;
   synth.speak(utter);
 }

@@ -429,11 +429,14 @@ video{
 }
 
 @media (max-width: 640px){
-  .emu-row{
-    flex-direction:column;
+  .emu-controls{
     align-items:center;
   }
-  .ab{width:120px; height:90px;}
+  .emu-row{
+    flex-wrap:wrap;
+    justify-content:space-around;
+  }
+  .ab{margin-left:12px;}
 }
 
 /* Quando estiver em fullscreen, aproveita a tela */
