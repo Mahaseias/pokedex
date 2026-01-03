@@ -506,11 +506,13 @@ async function ocrSnapshot(opts = { autoStop: false }){
       return;
     }
     // ROI baseado na moldura (mesma proporção do CSS)
-    const scaleX = video.videoWidth / (video.offsetWidth || video.videoWidth);
-    const scaleY = video.videoHeight / (video.offsetHeight || video.videoHeight);
-    const srcX = Math.floor((video.offsetWidth * 0.10) * scaleX);
-    const srcY = Math.floor((video.offsetHeight * 0.15) * scaleY);
-    const srcW = Math.floor((video.offsetWidth * 0.80) * scaleX);
+    const displayW = video.offsetWidth || video.clientWidth || video.videoWidth || 1;
+    const displayH = video.offsetHeight || video.clientHeight || video.videoHeight || 1;
+    const scaleX = video.videoWidth / displayW;
+    const scaleY = video.videoHeight / displayH;
+    const srcX = Math.floor((displayW * 0.10) * scaleX);
+    const srcY = Math.floor((displayH * 0.15) * scaleY);
+    const srcW = Math.floor((displayW * 0.80) * scaleX);
     const srcH = Math.floor(60 * scaleY);
 
     // duas variações: normal e invertida
@@ -570,6 +572,15 @@ async function ocrSnapshot(opts = { autoStop: false }){
       setRoute("who");
       if (opts.autoStop) stopCamera();
     } else {
+      const preview = $("previewCanvas");
+      if (preview && !texts.length){
+        // Mostra pelo menos o recorte mesmo sem texto
+        preview.width = canvasNormal.width;
+        preview.height = canvasNormal.height;
+        const pctx = preview.getContext("2d");
+        pctx.clearRect(0,0,preview.width,preview.height);
+        pctx.drawImage(canvasNormal,0,0);
+      }
       const displayResultado = $("resultadoNome");
       if (displayResultado) displayResultado.innerText = "Não reconhecido. Tente novamente.";
       $("scan-status").textContent = "Não reconheci um nome de Pokémon. Tente aproximar mais.";
