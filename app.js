@@ -359,7 +359,15 @@ function fuzzyBest(text){
 async function startCamera(){
   if (state.stream) return;
   const video = $("video");
-  const constraints = { video: { facingMode: "environment" }, audio: false };
+  const constraints = {
+    video: {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      facingMode: "environment",
+      advanced: [{ focusMode: "continuous" }]
+    },
+    audio: false
+  };
 
   state.stream = await navigator.mediaDevices.getUserMedia(constraints);
   video.srcObject = state.stream;
@@ -463,7 +471,7 @@ function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
 
   const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = img.data;
-  const threshFixed = 128;
+  const threshFixed = 90; // mais permissivo para imagens escuras
   for (let i = 0; i < data.length; i += 4){
     const avg = (data[i] + data[i+1] + data[i+2]) / 3;
     let v = avg < threshFixed ? 0 : 255;
