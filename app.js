@@ -271,14 +271,7 @@ function showWhoDetail(p){
   }, { once:true });
 
   // Leitura em voz (pokeDex style)
-  if ("speechSynthesis" in window){
-    const synth = window.speechSynthesis;
-    synth.cancel();
-    const text = `Número ${p.id}. ${p.name}. Tipos: ${(p.types||[]).map(typeLabel).join(", ")}. Golpes: ${moves.slice(0,4).join(", ")}. ${summary}`;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "pt-BR";
-    synth.speak(utter);
-  }
+  speakSummary(p, summary);
 }
 
 function makeSummary(p, moves, abilities){
@@ -286,6 +279,24 @@ function makeSummary(p, moves, abilities){
   const golpes = moves.slice(0,3).join(", ");
   const hab = abilities.slice(0,1).join(", ") || "habilidade não informada";
   return `${p.name} é um Pokémon do tipo ${tipos}, conhecido por golpes como ${golpes}. Habilidade comum: ${hab}.`;
+}
+
+function speakSummary(p, summary){
+  if (!("speechSynthesis" in window)) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+
+  const voices = synth.getVoices();
+  const chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt-br")) ||
+                 voices.find(v => v.lang.toLowerCase().startsWith("pt"));
+
+  const text = `Número ${p.id}. ${p.name}. ${summary}`;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = chosen?.lang || "pt-BR";
+  if (chosen) utter.voice = chosen;
+  utter.rate = 1;
+  utter.pitch = 1;
+  synth.speak(utter);
 }
 
 /* ---------------------------
@@ -706,11 +717,21 @@ function getWasmBoyInputAdapter(){
   const WB = state.WasmBoy;
   if (!WB) return null;
   const candidates = [
+    // preferido: API direta de botão
     (down, key) => (WB.setJoypadButton ? WB.setJoypadButton(key, down) : undefined),
+    // estado completo (mandamos maiúsculo e minúsculo por compatibilidade)
     (down, key) => {
       if (WB.setJoypadState){
         state.joypadState[key] = down;
-        return WB.setJoypadState({ ...state.joypadState });
+        const full = { ...state.joypadState };
+        // adicionar minúsculos e maiúsculos para cobrir variações
+        const merged = {};
+        for (const [k,v] of Object.entries(full)){
+          merged[k] = v;
+          merged[k.toUpperCase()] = v;
+          merged[k.toLowerCase()] = v;
+        }
+        return WB.setJoypadState(merged);
       }
       return undefined;
     },
