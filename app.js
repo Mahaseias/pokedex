@@ -462,7 +462,7 @@ async function ocrSnapshot(opts = { autoStop: false }){
     }
   } catch (e){
     console.error(e);
-    $("scan-status").textContent = "Erro no OCR. Verifique se a câmera está aberta.";
+    $("scan-status").textContent = "Erro no OCR. Tente de novo com mais luz e o nome centralizado.";
   }
 }
 async function captureAndOcr(){
@@ -735,6 +735,22 @@ function sendKeyList(keys, type){
   for (const k of keys) sendKey(k, type);
 }
 
+function applyJoypadState(gbKey, down){
+  if (!state.WasmBoy || !state.WasmBoy.setJoypadState) return;
+  const canon = {
+    UP: "up", DOWN: "down", LEFT: "left", RIGHT: "right",
+    A: "a", B: "b", START: "start", SELECT: "select"
+  };
+  const base = canon[gbKey] || gbKey;
+  const variants = [gbKey, gbKey.toUpperCase(), gbKey.toLowerCase(), base, base.toUpperCase(), base.toLowerCase()].filter(Boolean);
+  const merged = {};
+  for (const v of variants){
+    state.joypadState[v] = down;
+    merged[v] = state.joypadState[v];
+  }
+  state.WasmBoy.setJoypadState(merged);
+}
+
 function getWasmBoyInputAdapter(){
   const WB = state.WasmBoy;
   if (!WB) return null;
@@ -784,14 +800,18 @@ function bindPadButtons(){
       btn.setPointerCapture?.(e.pointerId);
       canvas?.focus();
       const adapter = getWasmBoyInputAdapter();
-      if (adapter && PAD_LOGICAL[logical]) adapter(true, PAD_LOGICAL[logical]);
+      const gb = PAD_LOGICAL[logical];
+      if (adapter && gb) adapter(true, gb);
+      if (gb) applyJoypadState(gb, true);
       if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keydown");
       if (PAD_ALT_KEYS[logical]) sendKeyList(PAD_ALT_KEYS[logical], "keydown");
     };
     const up = (e) => {
       e.preventDefault();
       const adapter = getWasmBoyInputAdapter();
-      if (adapter && PAD_LOGICAL[logical]) adapter(false, PAD_LOGICAL[logical]);
+      const gb = PAD_LOGICAL[logical];
+      if (adapter && gb) adapter(false, gb);
+      if (gb) applyJoypadState(gb, false);
       if (PAD_KEYBOARD[logical]) sendKey(PAD_KEYBOARD[logical], "keyup");
       if (PAD_ALT_KEYS[logical]) sendKeyList(PAD_ALT_KEYS[logical], "keyup");
     };

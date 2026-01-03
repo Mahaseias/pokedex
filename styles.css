@@ -438,14 +438,15 @@ video{
 
 /* Quando estiver em fullscreen, aproveita a tela */
 :fullscreen .emu-shell{
-  width: 100vw;
-  height: 100vh;
+  width: min(96vw, 960px);
+  height: auto;
+  margin: 0 auto;
 }
 :fullscreen .emu-shell #emu-canvas{
-  width: auto;
-  height: calc(100vh - 220px);
-  max-width: 98vw;
-  max-height: 90vh;
+  width: 100%;
+  height: auto;
+  max-width: 900px;
+  max-height: 82vh;
   margin: 0 auto;
 }
 
