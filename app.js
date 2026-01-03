@@ -438,10 +438,10 @@ function scanLoop(){
 async function ensureOcr(){
   if (state.ocrWorker) return state.ocrWorker;
   if (!window.Tesseract || !window.Tesseract.createWorker) throw new Error("Tesseract não carregou.");
-  const worker = await window.Tesseract.createWorker({
-    workerPath: "./vendor/tesseract.worker.min.js",
-    corePath: "./vendor/tesseract-core-simd.wasm",
-    langPath: "./vendor",
+  const worker = await window.Tesseract.createWorker("eng", 1, {
+    workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js",
+    corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0/tesseract-core.wasm.js",
+    langPath: "https://tessdata.projectnaptha.com/4.0.0",
     logger: () => {}
   });
   await worker.load();
@@ -506,26 +506,29 @@ async function ocrSnapshot(opts = { autoStop: false }){
       console.warn("OCR abortado: vídeo não pronto", { readyState: video.readyState });
       return;
     }
-    // ROI baseado na moldura (mesma proporção do CSS)
-    const displayW = video.offsetWidth || video.clientWidth || video.videoWidth || 1;
-    const displayH = video.offsetHeight || video.clientHeight || video.videoHeight || 1;
-    const scaleX = video.videoWidth / displayW;
-    const scaleY = video.videoHeight / displayH;
-    const srcX = Math.floor((displayW * 0.10) * scaleX);
-    const srcY = Math.floor((displayH * 0.15) * scaleY);
-    const srcW = Math.floor((displayW * 0.80) * scaleX);
-    const srcH = Math.floor(60 * scaleY);
+    // ROI centralizada e simples para evitar cortes inválidos
+    const vw = video.videoWidth || 1;
+    const vh = video.videoHeight || 1;
+    const cropW = Math.floor(vw * 0.8);
+    const cropH = Math.min(200, Math.floor(vh * 0.25));
+    const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
+    const srcY = Math.max(0, Math.floor((vh - cropH) / 2));
 
-    console.log("OCR ROI", { video: { vw: video.videoWidth, vh: video.videoHeight, ow: displayW, oh: displayH }, crop: { srcX, srcY, srcW, srcH }, ready: video.readyState });
-    if (srcW <= 0 || srcH <= 0){
-      console.error("OCR ROI inválido", { srcX, srcY, srcW, srcH });
-      $("scan-status").textContent = "Erro no recorte do OCR. Tente reiniciar a câmera.";
-      return;
+    console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
+
+    // Preview colorido (antes da binarização)
+    const preview = $("previewCanvas");
+    if (preview){
+      preview.width = cropW;
+      preview.height = cropH;
+      const pctx = preview.getContext("2d");
+      pctx.clearRect(0,0,preview.width,preview.height);
+      pctx.drawImage(video, srcX, srcY, cropW, cropH, 0, 0, preview.width, preview.height);
     }
 
     // duas variações: normal e invertida
-    const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: false });
-    const canvasInvert = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: true });
+    const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: cropW, h: cropH, invert: false });
+    const canvasInvert = makeBinaryCanvas(video, { x: srcX, y: srcY, w: cropW, h: cropH, invert: true });
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
