@@ -446,10 +446,32 @@ async function ensureOcr(){
   }
   await worker.setParameters({
     tessedit_pageseg_mode: "7", // single text line
-    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ "
   });
   state.ocrWorker = worker;
   return worker;
+}
+
+// Converte uma região para PB com upscale e retorna um canvas pronto para OCR.
+function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  canvas.width = Math.floor(w * scale);
+  canvas.height = Math.floor(h * scale);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(video, x, y, w, h, 0, 0, canvas.width, canvas.height);
+
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = img.data;
+  const threshFixed = 128;
+  for (let i = 0; i < data.length; i += 4){
+    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+    let v = avg < threshFixed ? 0 : 255;
+    if (invert) v = v === 0 ? 255 : 0;
+    data[i] = data[i+1] = data[i+2] = v;
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas;
 }
 
 function matchNameFromText(text){
@@ -481,54 +503,45 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const srcX = Math.floor((video.videoWidth - srcW) / 2);
     const srcY = Math.floor(video.videoHeight * 0.02); // um pouco abaixo do topo
 
-    // canvas temporário só para OCR
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    const scale = 2.5; // upscale forte
-    canvas.width = Math.floor(srcW * scale);
-    canvas.height = Math.floor(srcH * scale);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
-
-    // binarização agressiva (preto/branco) para OCR
-    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = img.data;
-    const threshFixed = 128;
-    for (let i = 0; i < data.length; i += 4){
-      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-      const v = avg < threshFixed ? 0 : 255;
-      data[i] = data[i+1] = data[i+2] = v;
-    }
-    ctx.putImageData(img, 0, 0);
+    // duas variações: normal e invertida
+    const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: false });
+    const canvasInvert = makeBinaryCanvas(video, { x: srcX, y: srcY, w: srcW, h: srcH, invert: true });
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
-    let ocrText = "";
-    try{
-      const { data: ocrData } = await worker.recognize(canvas, {
-        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-        tessedit_pageseg_mode: "7"
-      });
-      ocrText = ocrData.text || "";
-    } catch (errWorker){
-      console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
-      if (window.Tesseract && window.Tesseract.recognize){
-        const res = await window.Tesseract.recognize(canvas, "eng", {
-          tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+    const texts = [];
+
+    // helper para tentar leitura em um canvas
+    const readCanvas = async (canvas) => {
+      try{
+        const { data: ocrData } = await worker.recognize(canvas, {
+          tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ ",
           tessedit_pageseg_mode: "7"
         });
-        ocrText = res.data?.text || "";
-      } else if (window.OCRAD){
-        try{
-          ocrText = window.OCRAD(canvas) || "";
-        } catch (errO){
-          console.warn("OCRAD falhou:", errO);
+        if (ocrData.text) texts.push(ocrData.text);
+      } catch (errWorker){
+        console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
+        if (window.Tesseract && window.Tesseract.recognize){
+          const res = await window.Tesseract.recognize(canvas, "eng", {
+            tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ ",
+            tessedit_pageseg_mode: "7"
+          });
+          if (res.data?.text) texts.push(res.data.text);
+        } else if (window.OCRAD){
+          try{
+            const t = window.OCRAD(canvas) || "";
+            if (t) texts.push(t);
+          } catch (errO){
+            console.warn("OCRAD falhou:", errO);
+          }
         }
-      } else {
-        throw errWorker;
       }
-    }
-    const found = matchNameFromText(ocrText);
+    };
+
+    await readCanvas(canvasNormal);
+    await readCanvas(canvasInvert);
+
+    const found = matchNameFromText(texts.join(" "));
     if (found){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       showWhoDetail(found);
