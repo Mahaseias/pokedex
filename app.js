@@ -444,6 +444,10 @@ async function ensureOcr(){
     await worker.loadLanguage("eng");
     await worker.initialize("eng");
   }
+  await worker.setParameters({
+    tessedit_pageseg_mode: "7", // single text line
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  });
   state.ocrWorker = worker;
   return worker;
 }
@@ -478,11 +482,14 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const srcH = Math.floor(video.videoHeight * 0.18);
     const srcX = Math.floor((video.videoWidth - srcW) / 2);
     const srcY = Math.floor(video.videoHeight * 0.02); // um pouco abaixo do topo
-    canvas.width = srcW;
-    canvas.height = srcH;
-    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+    // upscaling para ajudar o OCR
+    const scale = 2.2;
+    canvas.width = Math.floor(srcW * scale);
+    canvas.height = Math.floor(srcH * scale);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
 
-    // pré-processamento: escala de cinza + threshold adaptativo simples
+    // pré-processamento: escala de cinza + contraste + threshold adaptativo simples
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = img.data;
     let sum = 0;
@@ -493,8 +500,10 @@ async function ocrSnapshot(opts = { autoStop: false }){
     }
     const avg = sum / count || 128;
     const thresh = Math.min(255, Math.max(60, avg * 0.8)); // mais agressivo
+    const gain = 1.35;
     for (let i = 0; i < data.length; i += 4){
-      const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      let g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      g = Math.max(0, Math.min(255, (g - 128) * gain + 128));
       const v = g > thresh ? 255 : 0;
       data[i] = data[i+1] = data[i+2] = v;
     }
@@ -502,8 +511,26 @@ async function ocrSnapshot(opts = { autoStop: false }){
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
-    const { data: ocrData } = await worker.recognize(canvas);
-    const found = matchNameFromText(ocrData.text || "");
+    let ocrText = "";
+    try{
+      const { data: ocrData } = await worker.recognize(canvas, {
+        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+        tessedit_pageseg_mode: "7"
+      });
+      ocrText = ocrData.text || "";
+    } catch (errWorker){
+      console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
+      if (window.Tesseract && window.Tesseract.recognize){
+        const res = await window.Tesseract.recognize(canvas, "eng", {
+          tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+          tessedit_pageseg_mode: "7"
+        });
+        ocrText = res.data?.text || "";
+      } else {
+        throw errWorker;
+      }
+    }
+    const found = matchNameFromText(ocrText);
     if (found){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       showWhoDetail(found);
