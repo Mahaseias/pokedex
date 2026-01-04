@@ -150,10 +150,15 @@
   { "id": 149, "name": "Dragonite", "types": ["Dragon", "Flying"], "tags": ["dragon"] },
   { "id": 150, "name": "Mewtwo", "types": ["Psychic"], "tags": ["legendary"] },
   { "id": 151, "name": "Mew", "types": ["Psychic"], "tags": ["legendary"] },
-  { "id": 667, "name": "Litleo", "types": ["Fire", "Normal"], "tags": ["cub", "kalos"], "sprite": "./litleo.jpg" },
-  { "id": 692, "name": "Clauncher", "types": ["Water"], "tags": ["crustacean", "kalos"], "sprite": "./clauncher.jpg" },
-  { "id": 818, "name": "Inteleon", "types": ["Water"], "tags": ["sniper", "galar", "starter"], "sprite": "./inteleon.jpg" },
-  { "id": 827, "name": "Nickit", "types": ["Dark"], "tags": ["fox", "galar"], "sprite": "./nickit.jpg" },
-  { "id": 1000, "name": "Gholdengo", "types": ["Steel", "Ghost"], "tags": ["coin", "paldea"], "sprite": "./gholdengo.jpg" }
+  { "id": 252, "name": "Treecko", "types": ["Grass"], "tags": ["starter", "hoenn"], "sprite": "./assets/sprites/252.gif" },
+  { "id": 255, "name": "Torchic", "types": ["Fire"], "tags": ["starter", "hoenn"], "sprite": "./assets/sprites/255.gif" },
+  { "id": 258, "name": "Mudkip", "types": ["Water"], "tags": ["starter", "hoenn"], "sprite": "./assets/sprites/258.gif" },
+  { "id": 393, "name": "Piplup", "types": ["Water"], "tags": ["starter", "sinnoh"], "sprite": "./assets/sprites/393.gif" },
+  { "id": 495, "name": "Snivy", "types": ["Grass"], "tags": ["starter", "unova"], "sprite": "./assets/sprites/495.gif" },
+  { "id": 667, "name": "Litleo", "types": ["Fire", "Normal"], "tags": ["cub", "kalos"], "sprite": "./assets/sprites/667.gif" },
+  { "id": 692, "name": "Clauncher", "types": ["Water"], "tags": ["crustacean", "kalos"], "sprite": "./assets/sprites/692.gif" },
+  { "id": 818, "name": "Inteleon", "types": ["Water"], "tags": ["sniper", "galar", "starter"], "sprite": "./assets/sprites/818.gif" },
+  { "id": 827, "name": "Nickit", "types": ["Dark"], "tags": ["fox", "galar"], "sprite": "./assets/sprites/827.gif" },
+  { "id": 1000, "name": "Gholdengo", "types": ["Steel", "Ghost"], "tags": ["coin", "paldea"], "sprite": "./assets/sprites/1000.gif" }
 ]
 

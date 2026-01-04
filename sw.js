@@ -24,8 +24,9 @@ const CORE_ASSETS = [
   "./assets/fonts/press-start-2p.ttf"
 ];
 const SPRITES = Array.from({ length: 151 }, (_, i) => `./assets/sprites/${i + 1}.gif`);
+const EXTRA_SPRITES = ["252","255","258","393","495","667","692","818","827","1000"].map(id => `./assets/sprites/${id}.gif`);
 const QR_EXAMPLES = ["./data/qr_25.png", "./data/qr_151.png"];
-const ASSETS = [...CORE_ASSETS, ...SPRITES, ...QR_EXAMPLES];
+const ASSETS = [...CORE_ASSETS, ...SPRITES, ...EXTRA_SPRITES, ...QR_EXAMPLES];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

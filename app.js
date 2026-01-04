@@ -44,8 +44,8 @@ const PAD_KEYBOARD = {
   select: "Shift"
 };
 const PAD_ALT_KEYS = {
-  a: ["z", "x", "KeyZ", "KeyX"],
-  b: ["x", "z", "KeyX", "KeyZ"],
+  a: ["z", "KeyZ"],
+  b: ["x", "KeyX"],
   start: ["Enter", "Return"],
   select: ["Shift", "Backspace", "Space"]
 };
@@ -294,8 +294,7 @@ function showWhoDetail(p){
         <div class="emerald-row header">PROFILE</div>
         <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
         <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
-        <div class="emerald-row">PICKUP: <span class="muted small">Pode pegar itens.</span></div>
-        <div class="emerald-row note"><strong>MEMO:</strong> Golpes: ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
+        <div class="emerald-row note"><strong>Golpes:</strong> ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
         <div class="emerald-row note"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
       </div>
     </div>
@@ -784,6 +783,29 @@ async function autoRunRom(arrayBuffer){
   }
 }
 
+async function stopRom(){
+  if (!state.WasmBoy) return;
+  try{
+    await state.WasmBoy.pause();
+  } catch(e){
+    console.warn("Falha ao pausar ROM", e);
+  }
+}
+
+async function saveRomState(){
+  if (!state.WasmBoy) return;
+  try{
+    const stateBuf = await state.WasmBoy.saveState();
+    if (stateBuf){
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(stateBuf)));
+      localStorage.setItem("emu-save", b64);
+      console.log("Save gravado");
+    }
+  } catch(e){
+    console.warn("Não foi possível salvar o jogo", e);
+  }
+}
+
 function loadRoms(){
   const raw = localStorage.getItem("roms");
   state.roms = raw ? JSON.parse(raw) : [];
@@ -959,6 +981,14 @@ function wireUI(){
       if (state.lastRomBuffer) autoRunRom(state.lastRomBuffer);
     });
   }
+  const stopBtn = $("btn-stop-rom");
+  if (stopBtn){
+    stopBtn.addEventListener("click", stopRom);
+  }
+  const saveBtn = $("btn-save-rom");
+  if (saveBtn){
+    saveBtn.addEventListener("click", saveRomState);
+  }
 
   bindPadButtons();
   bindFullscreen();
@@ -1028,17 +1058,44 @@ function simulateBattle(){
     log.textContent = "Pokémon inválido.";
     return;
   }
-  const power = (p) => {
-    const base = 50 + (p.types?.length||1)*10;
-    const rand = Math.floor(Math.random()*30);
-    return base + rand;
+  const effectiveness = (atk, def) => {
+    const chart = {
+      Fire: { Grass: 1.6, Ice: 1.6, Bug: 1.3, Steel: 1.6, Water: 0.7, Rock: 0.7, Fire: 0.7 },
+      Water:{ Fire: 1.6, Rock: 1.3, Ground: 1.3, Water: 0.7, Grass: 0.7 },
+      Grass:{ Water: 1.6, Rock: 1.3, Ground: 1.3, Fire: 0.7, Grass: 0.7, Flying:0.7 },
+      Electric:{ Water: 1.6, Flying:1.3, Ground:0, Grass:0.7 },
+      Ice:{ Dragon:1.6, Grass:1.3, Ground:1.3, Flying:1.3, Fire:0.7, Water:0.7 },
+      Fighting:{ Normal:1.6, Rock:1.6, Steel:1.6, Ice:1.3, Fairy:0.7, Flying:0.7, Psychic:0.7 },
+      Psychic:{ Fighting:1.6, Poison:1.3, Dark:0 },
+      Dark:{ Psychic:1.6, Ghost:1.3, Fairy:0.7 },
+      Ghost:{ Psychic:1.6, Ghost:1.3, Normal:0 },
+      Fairy:{ Dragon:1.6, Fighting:1.3, Dark:1.3, Fire:0.7, Steel:0.7 },
+      Rock:{ Fire:1.3, Flying:1.3, Ice:1.3, Fighting:0.7, Ground:0.7 },
+      Ground:{ Electric:1.6, Fire:1.3, Steel:1.3, Poison:1.3, Flying:0 }
+    };
+    let mult = 1;
+    const atkTypes = atk.types || [];
+    const defTypes = def.types || [];
+    for (const a of atkTypes){
+      for (const d of defTypes){
+        const val = chart[a]?.[d];
+        if (val !== undefined) mult *= val;
+      }
+    }
+    return mult || 1;
   };
-  const scoreA = power(pokeA);
-  const scoreB = power(pokeB);
+  const power = (p, target) => {
+    const base = 50 + (p.types?.length||1)*8;
+    const rand = Math.floor(Math.random()*25);
+    return Math.round((base + rand) * effectiveness(p, target));
+  };
+  const scoreA = power(pokeA, pokeB);
+  const scoreB = power(pokeB, pokeA);
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
+  const reason = winner ? `${winner.name} levou vantagem de tipo.` : "Empate! Rodem de novo.";
   log.innerHTML = `
     <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
-    <div class="muted small">${winner ? `Vencedor: ${escapeHtml(winner.name)}` : "Empate! Rodem de novo."}</div>
+    <div class="muted small">${reason}</div>
   `;
 }
 
