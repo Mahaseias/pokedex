@@ -1,4 +1,4 @@
-const CACHE_NAME = "pokedex-kanto-v28";
+const CACHE_NAME = "pokedex-kanto-v29";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,6 +15,11 @@ const CORE_ASSETS = [
   "./vendor/fflate.min.js",
   "./vendor/wasmboy.wasm.esm.js",
   "./data/kanto151.sample.json",
+  "./litleo.jpg",
+  "./clauncher.jpg",
+  "./inteleon.jpg",
+  "./nickit.jpg",
+  "./gholdengo.jpg",
   "./assets/home-hero.jpg",
   "./assets/fonts/press-start-2p.ttf"
 ];

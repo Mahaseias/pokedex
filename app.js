@@ -7,6 +7,7 @@ const state = {
   roms: [],
   stream: null,
   scanning: false,
+  ocrTimer: null,
   emuReady: false,
   WasmBoy: null,
   lastRomBuffer: null,
@@ -15,6 +16,9 @@ const state = {
     up:false, down:false, left:false, right:false,
     A:false, B:false, START:false, SELECT:false
   },
+  speech: {
+    currentUtter: null
+  }
 };
 
 // Mapeia data-key -> botões lógicos do Game Boy
@@ -49,7 +53,7 @@ const PAD_ALT_KEYS = {
 function $(id){ return document.getElementById(id); }
 
 function setRoute(route){
-  const views = ["home","menu","who","scan","emu"];
+  const views = ["home","menu","who","scan","emu","battle"];
   for (const v of views){
     const el = $(`view-${v}`);
     el.classList.toggle("hidden", v !== route);
@@ -99,6 +103,30 @@ const TYPE_PT = {
   Fairy: "Fada"
 };
 function typeLabel(t){ return TYPE_PT[t] || t; }
+
+// Regiões e evolução extra para alguns cards novos
+const EXTRA_INFO = {
+  667: { region: "Kalos", next: { name: "Pyroar", level: 35 } },
+  692: { region: "Kalos", next: { name: "Clawitzer", level: 37 } },
+  818: { region: "Galar", final: true },
+  827: { region: "Galar", next: { name: "Thievul", level: 18 } },
+  1000:{ region: "Paldea", final: true }
+};
+
+function regionFromTags(p){
+  if (EXTRA_INFO[p.id]?.region) return EXTRA_INFO[p.id].region;
+  const tg = (p.tags||[]).map(t=>t.toLowerCase());
+  if (tg.includes("kanto")) return "Kanto";
+  if (tg.includes("johto")) return "Johto";
+  if (tg.includes("hoenn")) return "Hoenn";
+  if (tg.includes("sinnoh")) return "Sinnoh";
+  if (tg.includes("unova")) return "Unova";
+  if (tg.includes("kalos")) return "Kalos";
+  if (tg.includes("alola")) return "Alola";
+  if (tg.includes("galar")) return "Galar";
+  if (tg.includes("paldea")) return "Paldea";
+  return "Kanto";
+}
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({
@@ -249,7 +277,11 @@ function showWhoDetail(p){
   const detail = $("who-detail");
   detail.innerHTML = `
     <div class="modal-card emerald">
-      <button class="modal-close" id="who-close">X</button>
+      <div class="modal-actions">
+        <button class="modal-nav" id="who-prev">&#9664;</button>
+        <button class="modal-close" id="who-close">X</button>
+        <button class="modal-nav" id="who-next">&#9654;</button>
+      </div>
       <div class="emerald-left">
         <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
         <div class="emerald-sprite">
@@ -269,23 +301,57 @@ function showWhoDetail(p){
     </div>
   `;
   modal.classList.add("open");
+  modal.dataset.pid = p.id;
   const closeBtn = $("who-close");
   if (closeBtn){
-    closeBtn.onclick = () => modal.classList.remove("open");
+    closeBtn.onclick = () => {
+      modal.classList.remove("open");
+      if ("speechSynthesis" in window){
+        window.speechSynthesis.cancel();
+        state.speech.currentUtter = null;
+      }
+    };
   }
   modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.classList.remove("open");
-  }, { once:true });
+    if (e.target === modal){
+      modal.classList.remove("open");
+      if ("speechSynthesis" in window){
+        window.speechSynthesis.cancel();
+        state.speech.currentUtter = null;
+      }
+    }
+  });
+  const prevBtn = $("who-prev");
+  const nextBtn = $("who-next");
+  if (prevBtn) prevBtn.onclick = () => showAdjacentPokemon(p.id, -1);
+  if (nextBtn) nextBtn.onclick = () => showAdjacentPokemon(p.id, 1);
 
   // Leitura em voz (pokeDex style)
   speakSummary(p, summary);
+}
+
+function showAdjacentPokemon(id, dir){
+  const sorted = [...state.pokedex].sort((a,b)=>a.id-b.id);
+  const idx = sorted.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  const next = sorted[(idx + dir + sorted.length) % sorted.length];
+  showWhoDetail(next);
 }
 
 function makeSummary(p, moves, abilities){
   const tipos = (p.types||[]).map(typeLabel).join(" e ") || "desconhecido";
   const golpes = moves.slice(0,3).join(", ");
   const hab = abilities.slice(0,1).join(", ") || "habilidade não informada";
-  return `${p.name} é um Pokémon do tipo ${tipos}, conhecido por golpes como ${golpes}. Habilidade comum: ${hab}.`;
+  const reg = regionFromTags(p);
+  const evo = evolutionText(p);
+  return `${p.name} é um Pokémon do tipo ${tipos}. Principais golpes: ${golpes}. Habilidade comum: ${hab}. Região: ${reg}. ${evo}`;
+}
+
+function evolutionText(p){
+  const info = EXTRA_INFO[p.id];
+  if (info?.final) return "Esta é sua última evolução.";
+  if (info?.next) return `Próxima evolução: ${info.next.name} a partir do nível ${info.next.level}.`;
+  return "Evolução final conhecida.";
 }
 
 function speakSummary(p, summary){
@@ -312,6 +378,7 @@ function speakSummary(p, summary){
   if (chosen) utter.voice = chosen;
   utter.rate = 0.9;
   utter.pitch = 1;
+  state.speech.currentUtter = utter;
   synth.speak(utter);
 }
 
@@ -400,13 +467,21 @@ async function startCamera(){
   $("btn-start").disabled = true;
   $("btn-stop").disabled = false;
   $("btn-ocr-capture").disabled = false;
+  $("btn-ocr-retry").disabled = false;
   $("scan-status").textContent = "Câmera ativa. Centralize o nome do card e toque em Foto + OCR.";
   state.scanning = true;
+  // auto captura em 3s
+  if (state.ocrTimer) clearTimeout(state.ocrTimer);
+  state.ocrTimer = setTimeout(() => captureAndOcr(), 3000);
   scanLoop();
 }
 
 function stopCamera(){
   state.scanning = false;
+  if (state.ocrTimer){
+    clearTimeout(state.ocrTimer);
+    state.ocrTimer = null;
+  }
   if (state.stream){
     for (const t of state.stream.getTracks()) t.stop();
     state.stream = null;
@@ -414,6 +489,7 @@ function stopCamera(){
   $("btn-start").disabled = false;
   $("btn-stop").disabled = true;
   $("btn-ocr-capture").disabled = true;
+  $("btn-ocr-retry").disabled = true;
   $("scan-status").textContent = "Câmera parada.";
 }
 
@@ -550,9 +626,9 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const vw = video.videoWidth || 1;
     const vh = video.videoHeight || 1;
     const cropW = Math.floor(vw * 0.8);
-    const cropH = Math.min(200, Math.floor(vh * 0.25));
+    const cropH = Math.min(200, Math.floor(vh * 0.2));
     const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-    const srcY = Math.max(0, Math.floor((vh - cropH) / 2));
+    const srcY = Math.max(0, Math.floor(vh * 0.45)); // mais para baixo no centro
 
     console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
 
@@ -572,11 +648,11 @@ async function ocrSnapshot(opts = { autoStop: false }){
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
-    const texts = [];
+  const texts = [];
 
-    // helper para tentar leitura em um canvas
-    const readCanvas = async (canvas) => {
-      try{
+  // helper para tentar leitura em um canvas
+  const readCanvas = async (canvas) => {
+    try{
         const { data: ocrData } = await worker.recognize(canvas, {
           tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ ",
           tessedit_pageseg_mode: "7"
@@ -621,8 +697,12 @@ async function ocrSnapshot(opts = { autoStop: false }){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       const displayResultado = $("resultadoNome");
       if (displayResultado) displayResultado.innerText = `Sucesso: ${found.name}`;
-      showWhoDetail(found);
-      setRoute("who");
+      const ok = window.confirm(`Confirmar Pokémon: ${found.name}?`);
+      if (ok){
+        showWhoDetail(found);
+      } else {
+        $("scan-status").textContent = "Cancelado. Tente novamente.";
+      }
       if (opts.autoStop) stopCamera();
     } else {
       const preview = $("previewCanvas");
@@ -858,6 +938,10 @@ function wireUI(){
   $("btn-start").addEventListener("click", startCamera);
   $("btn-stop").addEventListener("click", stopCamera);
   $("btn-ocr-capture").addEventListener("click", captureAndOcr);
+  $("btn-ocr-retry").addEventListener("click", () => {
+    if (state.ocrTimer) clearTimeout(state.ocrTimer);
+    captureAndOcr();
+  });
 
   $("btn-add-rom").addEventListener("click", addRom);
   $("rom-file").addEventListener("change", addRom);
@@ -879,6 +963,9 @@ function wireUI(){
   bindPadButtons();
   bindFullscreen();
   populatePreloadedSelect();
+
+  const battleBtn = $("btn-battle");
+  if (battleBtn) battleBtn.addEventListener("click", simulateBattle);
 }
 
 async function registerSW(){
@@ -895,12 +982,65 @@ async function registerSW(){
   wireUI();
 
   const initial = (location.hash || "#home").replace("#","");
-  setRoute(["home","menu","who","scan","emu"].includes(initial) ? initial : "home");
+  setRoute(["home","menu","who","scan","emu","battle"].includes(initial) ? initial : "home");
 
   await registerSW();
   await loadData();
+  populateBattleSelects();
   loadRoms();
 })();
+
+/* ---------------------------
+   BATALHA SIMPLES
+---------------------------- */
+function populateBattleSelects(){
+  const opts = state.pokedex.map(p => ({ value: p.id, label: `#${p.id.toString().padStart(3,"0")} ${p.name}` }));
+  const selA = $("battle-a");
+  const selB = $("battle-b");
+  if (!selA || !selB) return;
+  const fill = (sel) => {
+    sel.innerHTML = "";
+    opts.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    });
+  };
+  fill(selA);
+  fill(selB);
+}
+
+function simulateBattle(){
+  const selA = $("battle-a");
+  const selB = $("battle-b");
+  const log = $("battle-log");
+  if (!selA || !selB || !log) return;
+  const idA = Number(selA.value);
+  const idB = Number(selB.value);
+  if (idA === idB){
+    log.textContent = "Escolha dois Pokémon diferentes.";
+    return;
+  }
+  const pokeA = state.pokedex.find(p => p.id === idA);
+  const pokeB = state.pokedex.find(p => p.id === idB);
+  if (!pokeA || !pokeB){
+    log.textContent = "Pokémon inválido.";
+    return;
+  }
+  const power = (p) => {
+    const base = 50 + (p.types?.length||1)*10;
+    const rand = Math.floor(Math.random()*30);
+    return base + rand;
+  };
+  const scoreA = power(pokeA);
+  const scoreB = power(pokeB);
+  const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
+  log.innerHTML = `
+    <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
+    <div class="muted small">${winner ? `Vencedor: ${escapeHtml(winner.name)}` : "Empate! Rodem de novo."}</div>
+  `;
+}
 
 /* ---------------------------
    Controles e Fullscreen

@@ -11,7 +11,7 @@
 <body>
   <header class="topbar">
     <button class="mini burger burger-float" id="menu-toggle-btn" data-route="menu">≡ Menu</button>
-    <div class="version-badge" id="app-version">v28</div>
+    <div class="version-badge" id="app-version">v29</div>
   </header>
 
   <main class="container">
@@ -49,6 +49,14 @@
             <div class="menu-label">Módulo 3</div>
             <div class="menu-title">Emulador</div>
             <p class="muted small">Importe ROM e use Play ROM (autoexec com wasmBoy).</p>
+          </div>
+        </div>
+        <div class="menu-card mini-card" data-goto="battle">
+          <img src="./assets/sprites/6.gif" alt="Battle" />
+          <div>
+            <div class="menu-label">Módulo 4</div>
+            <div class="menu-title">Batalha</div>
+            <p class="muted small">Simule uma batalha entre dois Pokémon.</p>
           </div>
         </div>
       </div>
@@ -105,6 +113,7 @@
             <button class="primary" id="btn-start">Iniciar câmera</button>
             <button class="ghost" id="btn-stop" disabled>Parar</button>
             <button class="ghost" id="btn-ocr-capture" disabled>Foto + OCR</button>
+            <button class="ghost" id="btn-ocr-retry" disabled>Tentar novamente</button>
           </div>
           <div class="preview-box">
             <p class="muted small">O que o OCR está vendo:</p>
@@ -170,6 +179,27 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="view-battle" class="view hidden">
+      <h1>Simulação de Batalha</h1>
+      <div class="card">
+        <p class="muted">Escolha dois Pokémon da lista para uma batalha simples.</p>
+        <div class="row">
+          <div class="field">
+            <label>Pokémon A</label>
+            <select id="battle-a"></select>
+          </div>
+          <div class="field">
+            <label>Pokémon B</label>
+            <select id="battle-b"></select>
+          </div>
+        </div>
+        <div class="row">
+          <button class="primary" id="btn-battle">Simular</button>
+        </div>
+        <div id="battle-log" class="detail"></div>
       </div>
     </section>
   </main>
