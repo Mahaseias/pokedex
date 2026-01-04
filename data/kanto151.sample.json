@@ -149,6 +149,11 @@
   { "id": 148, "name": "Dragonair", "types": ["Dragon"], "tags": ["dragon"] },
   { "id": 149, "name": "Dragonite", "types": ["Dragon", "Flying"], "tags": ["dragon"] },
   { "id": 150, "name": "Mewtwo", "types": ["Psychic"], "tags": ["legendary"] },
-  { "id": 151, "name": "Mew", "types": ["Psychic"], "tags": ["legendary"] }
+  { "id": 151, "name": "Mew", "types": ["Psychic"], "tags": ["legendary"] },
+  { "id": 667, "name": "Litleo", "types": ["Fire", "Normal"], "tags": ["cub", "kalos"], "sprite": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" },
+  { "id": 692, "name": "Clauncher", "types": ["Water"], "tags": ["crustacean", "kalos"], "sprite": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" },
+  { "id": 818, "name": "Inteleon", "types": ["Water"], "tags": ["sniper", "galar", "starter"], "sprite": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" },
+  { "id": 827, "name": "Nickit", "types": ["Dark"], "tags": ["fox", "galar"], "sprite": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" },
+  { "id": 1000, "name": "Gholdengo", "types": ["Steel", "Ghost"], "tags": ["coin", "paldea"], "sprite": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" }
 ]
 

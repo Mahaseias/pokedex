@@ -69,6 +69,7 @@ function setRoute(route){
 
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
 function spriteUrl(id){ return `./assets/sprites/${Number(id)}.gif`; }
+function getSprite(p){ return p.sprite || spriteUrl(p.id); }
 
 function normalizeName(s){
   return String(s || "")
@@ -213,7 +214,7 @@ function renderWho(){
   root.innerHTML = list.map(p => `
     <div class="item" data-pid="${p.id}">
       <div class="thumb">
-        <img src="${spriteUrl(p.id)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
+        <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
         </div>
       <div class="item-main">
         <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
@@ -252,7 +253,7 @@ function showWhoDetail(p){
       <div class="emerald-left">
         <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
         <div class="emerald-sprite">
-          <img src="${spriteUrl(p.id)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
+          <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
         </div>
         <div class="emerald-name">${escapeHtml(p.name)}</div>
         <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
