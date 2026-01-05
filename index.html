@@ -187,7 +187,7 @@
     <section id="view-battle" class="view hidden">
       <h1>Simulação de Batalha</h1>
       <div class="card">
-        <p class="muted">Escolha dois Pokémon da lista para uma batalha simples.</p>
+        <p class="muted">Escolha dois Pokémon e veja quem vence considerando tipos e um pouco de sorte.</p>
         <div class="row">
           <div class="field">
             <label>Pokémon A</label>
@@ -200,6 +200,23 @@
         </div>
         <div class="row">
           <button class="primary" id="btn-battle">Simular</button>
+        </div>
+        <div class="battle-arena-container">
+          <div id="pokemon-1-card" class="battle-card">
+            <div class="battle-card-header"><span class="atk-power" id="p1-power">Poder: --</span></div>
+            <img id="p1-img" class="battle-img" alt="Pokémon A">
+            <h3 class="battle-name" id="p1-name">Pokémon A</h3>
+            <div class="battle-types" id="p1-types"></div>
+            <div class="type-advantage-indicator" id="p1-advantage" style="display:none;">▲ Vantagem de Tipo!</div>
+          </div>
+          <div class="versus-separator"><span>VS</span></div>
+          <div id="pokemon-2-card" class="battle-card">
+            <div class="battle-card-header"><span class="atk-power" id="p2-power">Poder: --</span></div>
+            <img id="p2-img" class="battle-img" alt="Pokémon B">
+            <h3 class="battle-name" id="p2-name">Pokémon B</h3>
+            <div class="battle-types" id="p2-types"></div>
+            <div class="type-advantage-indicator" id="p2-advantage" style="display:none;">▲ Vantagem de Tipo!</div>
+          </div>
         </div>
         <div id="battle-log" class="detail"></div>
       </div>

@@ -295,7 +295,7 @@ function showWhoDetail(p){
         <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
         <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
         <div class="emerald-row note"><strong>Golpes:</strong> ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
-        <div class="emerald-row note"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
+        <div class="emerald-row note resumo-container"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
       </div>
     </div>
   `;
