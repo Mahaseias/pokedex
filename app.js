@@ -82,9 +82,9 @@ function setRoute(route){
 }
 
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
-function spriteUrl(id){ return `./assets/sprites/${Number(id)}.gif`; }
+function spriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${Number(id)}.png`; }
 function officialArt(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`; }
-function getSprite(p){ return p.sprite || spriteUrl(p.id); }
+function getSprite(p){ return officialArt(p.id) || spriteUrl(p.id); }
 
 function normalizeName(s){
   return String(s || "")
@@ -147,8 +147,18 @@ function escapeHtml(s){
 
 async function loadData(){
   const res = await fetch("./data/kanto151.sample.json");
-  const data = await res.json();
-  state.pokedex = data;
+  const base = await res.json();
+  // Se quiser puxar todos automaticamente, preenche ids 1..1017 com artwork
+  const expanded = [];
+  for (let id = 1; id <= 1017; id++){
+    const found = base.find(p => p.id === id);
+    if (found){
+      expanded.push(found);
+    } else {
+      expanded.push({ id, name: `Pokémon ${id}`, types: [], tags: [], sprite: officialArt(id) });
+    }
+  }
+  state.pokedex = expanded;
 
   state.types = new Set();
   state.tags  = new Set();
@@ -637,12 +647,12 @@ async function ocrSnapshot(opts = { autoStop: false }){
       return;
     }
     // ROI centralizada e simples para evitar cortes inválidos
-    const vw = video.videoWidth || 1;
-    const vh = video.videoHeight || 1;
-    const cropW = Math.floor(vw * 0.8);
-    const cropH = Math.min(220, Math.floor(vh * 0.15)); // faixa mais fina
-    const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-    const srcY = Math.max(0, Math.floor(vh * 0.30)); // mira mais para baixo
+  const vw = video.videoWidth || 1;
+  const vh = video.videoHeight || 1;
+  const cropW = Math.floor(vw * 0.8);
+  const cropH = Math.min(260, Math.floor(vh * 0.18)); // faixa mais alta
+  const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
+  const srcY = Math.max(0, Math.floor(vh * 0.32)); // mais abaixo
 
     console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
 
@@ -1112,7 +1122,12 @@ function simulateBattle(){
   const scoreA = power(pokeA, pokeB);
   const scoreB = power(pokeB, pokeA);
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
-  const reason = winner ? `${winner.name} levou vantagem de tipo.` : "Empate! Rodem de novo.";
+  let reason = "Empate! Rodem de novo.";
+  if (winner === pokeA){
+    reason = `${pokeA.name} venceu. Vantagem contra: ${(pokeA.types||[]).map(typeLabel).join("/")} sobre ${(pokeB.types||[]).map(typeLabel).join("/")}.`;
+  } else if (winner === pokeB){
+    reason = `${pokeB.name} venceu. Vantagem contra: ${(pokeB.types||[]).map(typeLabel).join("/")} sobre ${(pokeA.types||[]).map(typeLabel).join("/")}.`;
+  }
 
   // montar cards
   const fillCard = (cardPrefix, poke, score, adv) => {

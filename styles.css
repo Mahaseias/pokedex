@@ -192,6 +192,7 @@ button.mini{
   max-width:820px;
   width:100%;
   position:relative;
+  margin:0 24px;
 }
 .modal-actions{
   display:flex;
@@ -211,8 +212,8 @@ button.mini{
   padding:10px 12px;
   cursor:pointer;
 }
-#who-prev{left:-14px;}
-#who-next{right:-14px;}
+#who-prev{left:-22px;}
+#who-next{right:-22px;}
 .modal-close{
   position:absolute;
   top:12px; right:12px;
@@ -570,8 +571,8 @@ video{
 :fullscreen .emu-shell #emu-canvas{
   width: 100%;
   height: auto;
-  max-width: 900px;
-  max-height: 82vh;
+  max-width: 720px;
+  max-height: 70vh;
   margin: 0 auto;
 }
 
