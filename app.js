@@ -146,20 +146,29 @@ function escapeHtml(s){
 }
 
 async function loadData(){
-  // nomes/ids completos via API (1..1017)
+  const cacheKey = "pokedex-cache-v31";
+  const cached = localStorage.getItem(cacheKey);
+  if (cached){
+    try{
+      state.pokedex = JSON.parse(cached);
+      rebuildTypesAndTags();
+      renderWho();
+      return;
+    } catch(_){}
+  }
+
   let list = [];
   try{
     const resAll = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1017");
     const json = await resAll.json();
-    list = json.results.map((r, idx) => {
+    list = json.results.map((r) => {
       const id = Number(r.url.split("/").filter(Boolean).pop());
-      return { id, name: r.name, types: [], tags: [], sprite: officialArt(id) };
+      return { id, name: capitalize(r.name), types: [], tags: [], sprite: officialArt(id) };
     });
   } catch(e){
     console.warn("Falha ao carregar lista completa, usando local base", e);
   }
 
-  // base local para sobrescrever tipos/tags conhecidos
   let base = [];
   try{
     const resLocal = await fetch("./data/kanto151.sample.json");
@@ -168,25 +177,50 @@ async function loadData(){
     console.warn("Falha ao ler base local", e);
   }
 
-  // mescla base em cima da lista carregada
   const byId = new Map(list.map(p => [p.id, p]));
   for (const p of base){
     byId.set(p.id, { ...byId.get(p.id), ...p, sprite: p.sprite || officialArt(p.id) });
   }
-  state.pokedex = Array.from(byId.values()).sort((a,b)=>a.id-b.id);
 
+  const merged = Array.from(byId.values());
+  await fetchDetailsForMissing(merged);
+  state.pokedex = merged.sort((a,b)=>a.id-b.id);
+  rebuildTypesAndTags();
+  localStorage.setItem(cacheKey, JSON.stringify(state.pokedex));
+  renderWho();
+}
+
+async function fetchDetailsForMissing(list){
+  const targets = list.filter(p => !p.types || !p.types.length);
+  const concurrency = 25;
+  for (let i = 0; i < targets.length; i += concurrency){
+    const slice = targets.slice(i, i+concurrency);
+    await Promise.all(slice.map(async (p) => {
+      try{
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        p.name = capitalize(data.name);
+        p.types = data.types.map(t => capitalize(t.type.name));
+        p.sprite = officialArt(p.id);
+      } catch(_){}
+    }));
+  }
+}
+
+function capitalize(s){
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function rebuildTypesAndTags(){
   state.types = new Set();
   state.tags  = new Set();
-
   for (const p of state.pokedex){
     (p.types||[]).forEach(t => state.types.add(t));
     (p.tags||[]).forEach(t => state.tags.add(t));
   }
-
   populateSelect("f-type", Array.from(state.types).sort());
   populateSelect("f-tag", Array.from(state.tags).sort());
-
-  renderWho();
 }
 
 function populateSelect(id, values){
@@ -1108,6 +1142,10 @@ function simulateBattle(){
   if (!selA || !selB || !log) return;
   const idA = Number(selA.value);
   const idB = Number(selB.value);
+  const cardA = $("pokemon-1-card");
+  const cardB = $("pokemon-2-card");
+  if (cardA) cardA.classList.remove("winner-card","loser-card");
+  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (idA === idB){
     log.textContent = "Escolha dois Pokémon diferentes.";
     return;
