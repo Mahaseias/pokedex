@@ -569,10 +569,10 @@ video{
   margin: 0 auto;
 }
 :fullscreen .emu-shell #emu-canvas{
-  width: 100%;
+  width: 90vw;
   height: auto;
-  max-width: 720px;
-  max-height: 70vh;
+  max-width: 640px;
+  max-height: 60vh;
   margin: 0 auto;
 }
 

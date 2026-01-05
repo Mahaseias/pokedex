@@ -146,19 +146,34 @@ function escapeHtml(s){
 }
 
 async function loadData(){
-  const res = await fetch("./data/kanto151.sample.json");
-  const base = await res.json();
-  // Se quiser puxar todos automaticamente, preenche ids 1..1017 com artwork
-  const expanded = [];
-  for (let id = 1; id <= 1017; id++){
-    const found = base.find(p => p.id === id);
-    if (found){
-      expanded.push(found);
-    } else {
-      expanded.push({ id, name: `Pokémon ${id}`, types: [], tags: [], sprite: officialArt(id) });
-    }
+  // nomes/ids completos via API (1..1017)
+  let list = [];
+  try{
+    const resAll = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1017");
+    const json = await resAll.json();
+    list = json.results.map((r, idx) => {
+      const id = Number(r.url.split("/").filter(Boolean).pop());
+      return { id, name: r.name, types: [], tags: [], sprite: officialArt(id) };
+    });
+  } catch(e){
+    console.warn("Falha ao carregar lista completa, usando local base", e);
   }
-  state.pokedex = expanded;
+
+  // base local para sobrescrever tipos/tags conhecidos
+  let base = [];
+  try{
+    const resLocal = await fetch("./data/kanto151.sample.json");
+    base = await resLocal.json();
+  } catch(e){
+    console.warn("Falha ao ler base local", e);
+  }
+
+  // mescla base em cima da lista carregada
+  const byId = new Map(list.map(p => [p.id, p]));
+  for (const p of base){
+    byId.set(p.id, { ...byId.get(p.id), ...p, sprite: p.sprite || officialArt(p.id) });
+  }
+  state.pokedex = Array.from(byId.values()).sort((a,b)=>a.id-b.id);
 
   state.types = new Set();
   state.tags  = new Set();
@@ -1057,24 +1072,39 @@ function populateBattleSelects(){
   const opts = state.pokedex.map(p => ({ value: p.id, label: `#${p.id.toString().padStart(3,"0")} ${p.name}` }));
   const selA = $("battle-a");
   const selB = $("battle-b");
-  if (!selA || !selB) return;
-  const fill = (sel) => {
+  const fill = (sel, filter="") => {
+    if (!sel) return;
     sel.innerHTML = "";
-    opts.forEach(o => {
-      const opt = document.createElement("option");
-      opt.value = o.value;
-      opt.textContent = o.label;
-      sel.appendChild(opt);
-    });
+    const f = filter.trim().toLowerCase();
+    opts.filter(o => !f || o.label.toLowerCase().includes(f) || o.value.toString().includes(f))
+        .forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = o.label;
+          sel.appendChild(opt);
+        });
   };
+  if (!selA || !selB) return;
   fill(selA);
   fill(selB);
+  const searchA = $("battle-search-a");
+  const searchB = $("battle-search-b");
+  if (searchA){
+    searchA.addEventListener("input", () => fill(selA, searchA.value));
+  }
+  if (searchB){
+    searchB.addEventListener("input", () => fill(selB, searchB.value));
+  }
 }
 
 function simulateBattle(){
   const selA = $("battle-a");
   const selB = $("battle-b");
+  const cardA = $("pokemon-1-card");
+  const cardB = $("pokemon-2-card");
   const log = $("battle-log");
+  if (cardA) cardA.classList.remove("winner-card","loser-card");
+  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (!selA || !selB || !log) return;
   const idA = Number(selA.value);
   const idB = Number(selB.value);
@@ -1124,9 +1154,9 @@ function simulateBattle(){
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
   let reason = "Empate! Rodem de novo.";
   if (winner === pokeA){
-    reason = `${pokeA.name} venceu. Vantagem contra: ${(pokeA.types||[]).map(typeLabel).join("/")} sobre ${(pokeB.types||[]).map(typeLabel).join("/")}.`;
+    reason = `${pokeA.name} venceu. Vantagens: ${(pokeA.types||[]).join("/")} sobre ${(pokeB.types||[]).join("/")}. Multiplicador: x${(advA/advB || 1).toFixed(2)}.`;
   } else if (winner === pokeB){
-    reason = `${pokeB.name} venceu. Vantagem contra: ${(pokeB.types||[]).map(typeLabel).join("/")} sobre ${(pokeA.types||[]).map(typeLabel).join("/")}.`;
+    reason = `${pokeB.name} venceu. Vantagens: ${(pokeB.types||[]).join("/")} sobre ${(pokeA.types||[]).join("/")}. Multiplicador: x${(advB/advA || 1).toFixed(2)}.`;
   }
 
   // montar cards
@@ -1153,10 +1183,13 @@ function simulateBattle(){
   fillCard("p2", pokeB, scoreB, advB);
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
+  if (cardA) cardA.classList.remove("winner-card","loser-card");
+  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (winner === pokeA){
     cardA?.classList.add("winner-card");
     cardB?.classList.add("loser-card");
-  } else if (winner === pokeB){
+  }
+  if (winner === pokeB){
     cardB?.classList.add("winner-card");
     cardA?.classList.add("loser-card");
   }
