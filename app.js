@@ -73,6 +73,7 @@ function setRoute(route){
 
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
 function spriteUrl(id){ return `./assets/sprites/${Number(id)}.gif`; }
+function officialArt(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`; }
 function getSprite(p){ return p.sprite || spriteUrl(p.id); }
 
 function normalizeName(s){
@@ -242,7 +243,8 @@ function renderWho(){
   root.innerHTML = list.map(p => `
     <div class="item" data-pid="${p.id}">
       <div class="thumb">
-        <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
+        <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy"
+             onerror="this.onerror=null; this.src='${officialArt(p.id)}';" />
         </div>
       <div class="item-main">
         <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
@@ -284,13 +286,14 @@ function showWhoDetail(p){
       </div>
       <div class="pokemon-profile-container">
         <div class="emerald-left profile-card">
-          <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
-          <div class="emerald-sprite">
-            <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
-          </div>
-          <div class="emerald-name">${escapeHtml(p.name)}</div>
-          <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
+        <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
+        <div class="emerald-sprite">
+          <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy"
+               onerror="this.onerror=null; this.src='${officialArt(p.id)}';" />
         </div>
+        <div class="emerald-name">${escapeHtml(p.name)}</div>
+        <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
+      </div>
         <div class="emerald-right info-card">
           <div class="emerald-row header">PROFILE</div>
           <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
@@ -1144,12 +1147,13 @@ function updateBattlePreview(){
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
   const pokeB = state.pokedex.find(p => p.id === Number(selB.value));
-  const fillImg = (id, poke) => {
+    const fillImg = (id, poke) => {
     const img = $(id);
     if (img && poke){
       img.src = getSprite(poke);
       img.alt = poke.name;
       img.style.display = "block";
+      img.onerror = () => { img.onerror = null; img.src = officialArt(poke.id); };
     }
   };
   fillImg("p1-img", pokeA);
