@@ -146,81 +146,32 @@ function escapeHtml(s){
 }
 
 async function loadData(){
-  const cacheKey = "pokedex-cache-v31";
-  const cached = localStorage.getItem(cacheKey);
-  if (cached){
-    try{
-      state.pokedex = JSON.parse(cached);
-      rebuildTypesAndTags();
-      renderWho();
-      return;
-    } catch(_){}
+  const res = await fetch("./data/kanto151.sample.json");
+  const base = await res.json();
+  // Se quiser puxar todos automaticamente, preenche ids 1..1017 com artwork
+  const expanded = [];
+  for (let id = 1; id <= 1017; id++){
+    const found = base.find(p => p.id === id);
+    if (found){
+      expanded.push(found);
+    } else {
+      expanded.push({ id, name: `Pokémon ${id}`, types: [], tags: [], sprite: officialArt(id) });
+    }
   }
+  state.pokedex = expanded;
 
-  let list = [];
-  try{
-    const resAll = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1017");
-    const json = await resAll.json();
-    list = json.results.map((r) => {
-      const id = Number(r.url.split("/").filter(Boolean).pop());
-      return { id, name: capitalize(r.name), types: [], tags: [], sprite: officialArt(id) };
-    });
-  } catch(e){
-    console.warn("Falha ao carregar lista completa, usando local base", e);
-  }
-
-  let base = [];
-  try{
-    const resLocal = await fetch("./data/kanto151.sample.json");
-    base = await resLocal.json();
-  } catch(e){
-    console.warn("Falha ao ler base local", e);
-  }
-
-  const byId = new Map(list.map(p => [p.id, p]));
-  for (const p of base){
-    byId.set(p.id, { ...byId.get(p.id), ...p, sprite: p.sprite || officialArt(p.id) });
-  }
-
-  const merged = Array.from(byId.values());
-  await fetchDetailsForMissing(merged);
-  state.pokedex = merged.sort((a,b)=>a.id-b.id);
-  rebuildTypesAndTags();
-  localStorage.setItem(cacheKey, JSON.stringify(state.pokedex));
-  renderWho();
-}
-
-async function fetchDetailsForMissing(list){
-  const targets = list.filter(p => !p.types || !p.types.length);
-  const concurrency = 25;
-  for (let i = 0; i < targets.length; i += concurrency){
-    const slice = targets.slice(i, i+concurrency);
-    await Promise.all(slice.map(async (p) => {
-      try{
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        p.name = capitalize(data.name);
-        p.types = data.types.map(t => capitalize(t.type.name));
-        p.sprite = officialArt(p.id);
-      } catch(_){}
-    }));
-  }
-}
-
-function capitalize(s){
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-function rebuildTypesAndTags(){
   state.types = new Set();
   state.tags  = new Set();
+
   for (const p of state.pokedex){
     (p.types||[]).forEach(t => state.types.add(t));
     (p.tags||[]).forEach(t => state.tags.add(t));
   }
+
   populateSelect("f-type", Array.from(state.types).sort());
   populateSelect("f-tag", Array.from(state.tags).sort());
+
+  renderWho();
 }
 
 function populateSelect(id, values){
@@ -1106,39 +1057,24 @@ function populateBattleSelects(){
   const opts = state.pokedex.map(p => ({ value: p.id, label: `#${p.id.toString().padStart(3,"0")} ${p.name}` }));
   const selA = $("battle-a");
   const selB = $("battle-b");
-  const fill = (sel, filter="") => {
-    if (!sel) return;
-    sel.innerHTML = "";
-    const f = filter.trim().toLowerCase();
-    opts.filter(o => !f || o.label.toLowerCase().includes(f) || o.value.toString().includes(f))
-        .forEach(o => {
-          const opt = document.createElement("option");
-          opt.value = o.value;
-          opt.textContent = o.label;
-          sel.appendChild(opt);
-        });
-  };
   if (!selA || !selB) return;
+  const fill = (sel) => {
+    sel.innerHTML = "";
+    opts.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    });
+  };
   fill(selA);
   fill(selB);
-  const searchA = $("battle-search-a");
-  const searchB = $("battle-search-b");
-  if (searchA){
-    searchA.addEventListener("input", () => fill(selA, searchA.value));
-  }
-  if (searchB){
-    searchB.addEventListener("input", () => fill(selB, searchB.value));
-  }
 }
 
 function simulateBattle(){
   const selA = $("battle-a");
   const selB = $("battle-b");
   const log = $("battle-log");
-  const cardA = $("pokemon-1-card");
-  const cardB = $("pokemon-2-card");
-  if (cardA) cardA.classList.remove("winner-card","loser-card");
-  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (!selA || !selB || !log) return;
   const idA = Number(selA.value);
   const idB = Number(selB.value);
@@ -1188,9 +1124,9 @@ function simulateBattle(){
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
   let reason = "Empate! Rodem de novo.";
   if (winner === pokeA){
-    reason = `${pokeA.name} venceu. Vantagens: ${(pokeA.types||[]).join("/")} sobre ${(pokeB.types||[]).join("/")}. Multiplicador: x${(advA/advB || 1).toFixed(2)}.`;
+    reason = `${pokeA.name} venceu. Vantagem contra: ${(pokeA.types||[]).map(typeLabel).join("/")} sobre ${(pokeB.types||[]).map(typeLabel).join("/")}.`;
   } else if (winner === pokeB){
-    reason = `${pokeB.name} venceu. Vantagens: ${(pokeB.types||[]).join("/")} sobre ${(pokeA.types||[]).join("/")}. Multiplicador: x${(advB/advA || 1).toFixed(2)}.`;
+    reason = `${pokeB.name} venceu. Vantagem contra: ${(pokeB.types||[]).map(typeLabel).join("/")} sobre ${(pokeA.types||[]).map(typeLabel).join("/")}.`;
   }
 
   // montar cards
@@ -1217,13 +1153,10 @@ function simulateBattle(){
   fillCard("p2", pokeB, scoreB, advB);
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
-  if (cardA) cardA.classList.remove("winner-card","loser-card");
-  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (winner === pokeA){
     cardA?.classList.add("winner-card");
     cardB?.classList.add("loser-card");
-  }
-  if (winner === pokeB){
+  } else if (winner === pokeB){
     cardB?.classList.add("winner-card");
     cardA?.classList.add("loser-card");
   }
