@@ -188,7 +188,11 @@ button.mini{
   z-index:50;
 }
 .modal.open{display:flex;}
-.modal-card{max-width:520px; width:100%;}
+.modal-card{
+  max-width:820px;
+  width:100%;
+  position:relative;
+}
 .modal-actions{
   display:flex;
   justify-content:space-between;
@@ -196,6 +200,19 @@ button.mini{
   align-items:center;
   margin-bottom:6px;
 }
+#who-prev, #who-next{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,.35);
+  border:1px solid var(--border-strong);
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+}
+#who-prev{left:-14px;}
+#who-next{right:-14px;}
 .modal-close{
   position:absolute;
   top:12px; right:12px;
@@ -295,6 +312,15 @@ button.mini{
   width:100%;
 }
 .golpes-section, #golpes-detalhes{display:none!important;}
+.emerald-left.profile-card{
+  width:260px;
+  min-width:200px;
+  background:linear-gradient(180deg, #0c373a, #0b262d);
+}
+.emerald-right.info-card{
+  flex:1;
+  min-width:280px;
+}
 .pokemon-profile-container{
   display:flex;
   flex-direction:row;
