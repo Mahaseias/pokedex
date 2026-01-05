@@ -282,19 +282,21 @@ function showWhoDetail(p){
         <button class="modal-close" id="who-close">X</button>
         <button class="modal-nav" id="who-next">&#9654;</button>
       </div>
-      <div class="emerald-left">
-        <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
-        <div class="emerald-sprite">
-          <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
+      <div class="pokemon-profile-container">
+        <div class="emerald-left profile-card">
+          <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
+          <div class="emerald-sprite">
+            <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy" />
+          </div>
+          <div class="emerald-name">${escapeHtml(p.name)}</div>
+          <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
         </div>
-        <div class="emerald-name">${escapeHtml(p.name)}</div>
-        <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
-      </div>
-      <div class="emerald-right">
-        <div class="emerald-row header">PROFILE</div>
-        <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
-        <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
-        <div class="emerald-row note resumo-container"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
+        <div class="emerald-right info-card">
+          <div class="emerald-row header">PROFILE</div>
+          <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
+          <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
+          <div class="emerald-row note resumo-container"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
+        </div>
       </div>
     </div>
   `;
@@ -624,9 +626,9 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const vw = video.videoWidth || 1;
     const vh = video.videoHeight || 1;
     const cropW = Math.floor(vw * 0.8);
-    const cropH = Math.min(240, Math.floor(vh * 0.25));
+    const cropH = Math.min(220, Math.floor(vh * 0.15)); // faixa mais fina
     const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-    const srcY = Math.max(0, Math.floor(vh * 0.55)); // mira mais abaixo para pegar a linha do nome
+    const srcY = Math.max(0, Math.floor(vh * 0.30)); // mira mais para baixo
 
     console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
 
@@ -963,6 +965,10 @@ function wireUI(){
     if (state.ocrTimer) clearTimeout(state.ocrTimer);
     captureAndOcr();
   });
+  const selA = $("battle-a");
+  const selB = $("battle-b");
+  if (selA) selA.addEventListener("change", updateBattlePreview);
+  if (selB) selB.addEventListener("change", updateBattlePreview);
 
   $("btn-add-rom").addEventListener("click", addRom);
   $("rom-file").addEventListener("change", addRom);
@@ -1016,6 +1022,7 @@ async function registerSW(){
   await registerSW();
   await loadData();
   populateBattleSelects();
+  updateBattlePreview();
   loadRoms();
 })();
 
@@ -1085,7 +1092,7 @@ function simulateBattle(){
   };
   const power = (p, target) => {
     const base = 50 + (p.types?.length||1)*8;
-    const rand = Math.floor(Math.random()*25);
+    const rand = Math.floor(Math.random()*10);
     return Math.round((base + rand) * effectiveness(p, target));
   };
   const scoreA = power(pokeA, pokeB);
@@ -1129,6 +1136,24 @@ function simulateBattle(){
     <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
     <div class="muted small">${reason}</div>
   `;
+}
+
+function updateBattlePreview(){
+  const selA = $("battle-a");
+  const selB = $("battle-b");
+  if (!selA || !selB) return;
+  const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
+  const pokeB = state.pokedex.find(p => p.id === Number(selB.value));
+  const fillImg = (id, poke) => {
+    const img = $(id);
+    if (img && poke){
+      img.src = getSprite(poke);
+      img.alt = poke.name;
+      img.style.display = "block";
+    }
+  };
+  fillImg("p1-img", pokeA);
+  fillImg("p2-img", pokeB);
 }
 
 /* ---------------------------

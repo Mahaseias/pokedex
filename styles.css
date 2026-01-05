@@ -274,6 +274,9 @@ button.mini{
   border-radius:16px;
   padding:12px;
   box-shadow:0 10px 20px rgba(0,0,0,.3);
+  width:45%;
+  min-width:160px;
+  margin:5px;
 }
 .profile-header{display:flex; gap:12px; align-items:center;}
 .profile-id{font-size:12px; color:var(--muted);}
@@ -283,6 +286,24 @@ button.mini{
 .pill-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
 .pill-row .label{font-size:11px; color:var(--muted);}
 .note{margin-top:4px;}
+.pokemon-profile-container{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+}
+.golpes-section, #golpes-detalhes{display:none!important;}
+.pokemon-profile-container{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+}
+.golpes-section, #golpes-detalhes{display:none!important;}
 
 .thumb{
   width:72px;
@@ -335,13 +356,22 @@ video{
 }
 .focus-region{
   position:absolute;
-  top:15%;
+  top:25%;
   left:10%;
   width:80%;
-  height:60px;
+  height:120px;
   border:2px solid #00ffcc;
   border-radius:8px;
   box-shadow:0 0 15px rgba(0,255,204,0.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#00ffcc;
+  font-family:var(--font-title);
+  font-size:11px;
+}
+.focus-region::after{
+  content:"Encaixe o nome do Pokémon aqui";
 }
 .preview-box{
   margin-top:10px;

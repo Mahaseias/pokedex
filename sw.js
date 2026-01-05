@@ -1,4 +1,4 @@
-const CACHE_NAME = "pokedex-kanto-v29";
+const CACHE_NAME = "pokedex-kanto-v30";
 const CORE_ASSETS = [
   "./",
   "./index.html",
