@@ -1134,18 +1134,14 @@ function populateBattleSelects(){
 function simulateBattle(){
   const selA = $("battle-a");
   const selB = $("battle-b");
+  const log = $("battle-log");
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
-  const log = $("battle-log");
   if (cardA) cardA.classList.remove("winner-card","loser-card");
   if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (!selA || !selB || !log) return;
   const idA = Number(selA.value);
   const idB = Number(selB.value);
-  const cardA = $("pokemon-1-card");
-  const cardB = $("pokemon-2-card");
-  if (cardA) cardA.classList.remove("winner-card","loser-card");
-  if (cardB) cardB.classList.remove("winner-card","loser-card");
   if (idA === idB){
     log.textContent = "Escolha dois Pokémon diferentes.";
     return;
