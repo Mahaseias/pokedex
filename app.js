@@ -21,6 +21,16 @@ const state = {
   }
 };
 
+// vozes carregadas (tts)
+let loadedVoices = [];
+function loadVoices(){
+  loadedVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+}
+if ("speechSynthesis" in window){
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+}
+
 // Mapeia data-key -> botões lógicos do Game Boy
 const PAD_LOGICAL = {
   up: "UP",
@@ -362,25 +372,26 @@ function speakSummary(p, summary){
   const synth = window.speechSynthesis;
   synth.cancel();
 
-  const voices = synth.getVoices();
+  const voices = loadedVoices.length ? loadedVoices : synth.getVoices();
   const pickVoice = () => {
-    const ptVoices = voices.filter(v => (v.lang||"").toLowerCase().startsWith("pt"));
-    // preferência: nomes que sugerem feminina e pt-BR
-    const female = ptVoices.find(v => /female|feminina|mulher|pt-?br|brasil/i.test(v.name)) ||
-                   ptVoices.find(v => /br/i.test(v.lang)) ||
-                   ptVoices.find(v => /pt/i.test(v.lang)) ||
-                   ptVoices.find(v => /maria|camila|ana|carla/i.test(v.name)) ||
-                   ptVoices[0];
-    return female || null;
+    const pt = voices.filter(v => (v.lang||"").toLowerCase().includes("pt"));
+    return pt.find(v => v.name.includes("Google") && v.lang.toLowerCase().includes("br")) ||
+           pt.find(v => /Luciana|Maria|Francisca|Heloisa/i.test(v.name)) ||
+           pt.find(v => v.lang.toLowerCase().includes("br")) ||
+           pt[0] || null;
   };
   const chosen = pickVoice();
 
   const text = `Número ${p.id}. ${p.name}. ${summary}`;
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = chosen?.lang || "pt-BR";
-  if (chosen) utter.voice = chosen;
-  utter.rate = 0.9;
-  utter.pitch = 1;
+  if (chosen){
+    utter.voice = chosen;
+    utter.lang = chosen.lang;
+  } else {
+    utter.lang = "pt-BR";
+  }
+  utter.rate = 0.95;
+  utter.pitch = 1.1;
   state.speech.currentUtter = utter;
   synth.speak(utter);
 }
