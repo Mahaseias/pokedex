@@ -159,6 +159,8 @@
   { "id": 692, "name": "Clauncher", "types": ["Water"], "tags": ["crustacean", "kalos"], "sprite": "./assets/sprites/692.gif" },
   { "id": 818, "name": "Inteleon", "types": ["Water"], "tags": ["sniper", "galar", "starter"], "sprite": "./assets/sprites/818.gif" },
   { "id": 827, "name": "Nickit", "types": ["Dark"], "tags": ["fox", "galar"], "sprite": "./assets/sprites/827.gif" },
-  { "id": 1000, "name": "Gholdengo", "types": ["Steel", "Ghost"], "tags": ["coin", "paldea"], "sprite": "./assets/sprites/1000.gif" }
+  { "id": 1000, "name": "Gholdengo", "types": ["Steel", "Ghost"], "tags": ["coin", "paldea"], "sprite": "./assets/sprites/1000.gif" },
+  { "id": 1015, "name": "Hydrapple", "types": ["Grass", "Dragon"], "tags": ["paldea"], "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1015.png" },
+  { "id": 1017, "name": "Ogerpon", "types": ["Grass"], "tags": ["paldea", "mask"], "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1017.png" }
 ]
 

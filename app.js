@@ -294,7 +294,6 @@ function showWhoDetail(p){
         <div class="emerald-row header">PROFILE</div>
         <div class="emerald-row">TYPE: <span class="pill">${(p.types||[]).map(typeLabel).join(" / ")}</span></div>
         <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
-        <div class="emerald-row note"><strong>Golpes:</strong> ${moves.slice(0,4).map(escapeHtml).join(", ")}</div>
         <div class="emerald-row note resumo-container"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
       </div>
     </div>
@@ -625,9 +624,9 @@ async function ocrSnapshot(opts = { autoStop: false }){
     const vw = video.videoWidth || 1;
     const vh = video.videoHeight || 1;
     const cropW = Math.floor(vw * 0.8);
-    const cropH = Math.min(200, Math.floor(vh * 0.2));
+    const cropH = Math.min(240, Math.floor(vh * 0.25));
     const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-    const srcY = Math.max(0, Math.floor(vh * 0.45)); // mais para baixo no centro
+    const srcY = Math.max(0, Math.floor(vh * 0.55)); // mira mais abaixo para pegar a linha do nome
 
     console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
 
@@ -1093,6 +1092,39 @@ function simulateBattle(){
   const scoreB = power(pokeB, pokeA);
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
   const reason = winner ? `${winner.name} levou vantagem de tipo.` : "Empate! Rodem de novo.";
+
+  // montar cards
+  const fillCard = (cardPrefix, poke, score, adv) => {
+    const card = $(`${cardPrefix}-card`);
+    const powerEl = $(`${cardPrefix}-power`);
+    const imgEl = $(`${cardPrefix}-img`);
+    const nameEl = $(`${cardPrefix}-name`);
+    const typesEl = $(`${cardPrefix}-types`);
+    const advEl = $(`${cardPrefix}-advantage`);
+    if (!card || !powerEl || !imgEl || !nameEl || !typesEl || !advEl) return;
+    card.classList.remove("winner-card", "loser-card");
+    powerEl.textContent = `Poder: ${score}`;
+    imgEl.src = getSprite(poke);
+    imgEl.alt = poke.name;
+    nameEl.textContent = poke.name;
+    typesEl.innerHTML = (poke.types||[]).map(t => `<span class="type-badge">${escapeHtml(typeLabel(t))}</span>`).join("");
+    advEl.style.display = adv > 1 ? "block" : "none";
+    advEl.textContent = adv > 1 ? "▲ Vantagem de tipo!" : "";
+  };
+  const advA = effectiveness(pokeA, pokeB);
+  const advB = effectiveness(pokeB, pokeA);
+  fillCard("p1", pokeA, scoreA, advA);
+  fillCard("p2", pokeB, scoreB, advB);
+  const cardA = $("pokemon-1-card");
+  const cardB = $("pokemon-2-card");
+  if (winner === pokeA){
+    cardA?.classList.add("winner-card");
+    cardB?.classList.add("loser-card");
+  } else if (winner === pokeB){
+    cardB?.classList.add("winner-card");
+    cardA?.classList.add("loser-card");
+  }
+
   log.innerHTML = `
     <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
     <div class="muted small">${reason}</div>

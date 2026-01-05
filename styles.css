@@ -374,11 +374,13 @@ video{
 #emu-canvas{
   display: block;
   width: 100%;
+  max-width:100%;
   height: auto;
   aspect-ratio: 320 / 288;
   border-radius: 12px;
   background: #000;
   object-fit: contain;
+  margin:0 auto;
 }
 
 /* Botão fullscreen (canto superior direito dentro do quadro) */
@@ -658,6 +660,7 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   filter:grayscale(75%);
   transform:scale(0.98);
 }
+.battle-gif{width:80px; height:80px; object-fit:contain;}
 .battle-card-header{font-size:11px; margin-bottom:6px;}
 .battle-img{width:120px; height:120px; object-fit:contain;}
 .battle-name{margin:8px 0; color:#4edede;}
