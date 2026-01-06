@@ -151,6 +151,16 @@ button:disabled{opacity:.5; cursor:not-allowed}
   flex-wrap:wrap;
   position:relative;
 }
+.item[data-type="Fire"]{background:rgba(255,120,80,0.12);}
+.item[data-type="Water"]{background:rgba(80,140,255,0.12);}
+.item[data-type="Grass"]{background:rgba(80,200,120,0.12);}
+.item[data-type="Electric"]{background:rgba(255,220,80,0.12);}
+.item[data-type="Psychic"]{background:rgba(255,110,200,0.12);}
+.item[data-type="Ice"]{background:rgba(180,240,255,0.12);}
+.item[data-type="Rock"]{background:rgba(200,170,120,0.12);}
+.item[data-type="Ground"]{background:rgba(210,180,120,0.12);}
+.item[data-type="Fairy"]{background:rgba(255,180,220,0.12);}
+.item[data-type="Dark"]{background:rgba(80,80,100,0.18);}
 .item-main{flex:1; min-width:0;}
 .badges{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-start}
 .badge{
@@ -672,16 +682,30 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 
 .menu-hidden{display:none;}
 
-.battle-arena-container{
+.battle-arena{
   display:flex;
-  justify-content:center;
+  flex-direction:column;
+  gap:5px;
+  background:radial-gradient(circle, #1a3e1e 0%, #031a1a 100%);
+  padding:10px;
+  border-radius:20px;
+  border:4px solid #ffcc00;
   align-items:center;
-  gap:16px;
-  padding:14px;
-  background:rgba(0,0,0,.18);
-  border:2px solid var(--border-strong);
-  border-radius:14px;
-  flex-wrap:wrap;
+}
+.versus-circle{
+  width:50px;
+  height:50px;
+  background:#ff0000;
+  color:#fff;
+  border:3px solid #fff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  z-index:5;
+  margin:-25px 0;
+  box-shadow:0 0 10px rgba(0,0,0,0.5);
 }
 .battle-card{
   background:linear-gradient(180deg, var(--panel), var(--panel2));
@@ -700,6 +724,23 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   box-shadow:0 0 30px rgba(255,204,0,.35);
   transform:scale(1.04);
   background:linear-gradient(180deg, #184023, #0f2f1a);
+}
+.battle-card.shaking{animation:shake 0.2s infinite;}
+.battle-card.winner-glow{
+  border:5px solid #ffcc00!important;
+  box-shadow:0 0 30px #ffcc00;
+  transform:scale(1.1);
+  z-index:10;
+}
+.battle-card.loser-fade{
+  opacity:0.5;
+  filter:grayscale(80%);
+}
+@keyframes shake{
+  0%{transform:translate(1px,1px) rotate(0deg);}
+  20%{transform:translate(-3px,0px) rotate(1deg);}
+  40%{transform:translate(3px,2px) rotate(-1deg);}
+  100%{transform:translate(1px,-1px) rotate(0deg);}
 }
 .battle-card.winner-card::after{
   content:"VENCEDOR!";
@@ -723,12 +764,12 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 .battle-name{margin:8px 0; color:#4edede;}
 .battle-types{display:flex; justify-content:center; gap:6px; flex-wrap:wrap; font-size:10px;}
 .type-badge{padding:4px 8px; border-radius:10px; border:1px solid var(--border-strong); background:rgba(0,0,0,.2);}
-.versus-separator{
-  font-family:var(--font-title);
-  font-size:24px;
-  color:#ffcc00;
-  text-shadow:1px 1px #ff0000;
-}
+.stats-mini{margin-top:6px; display:flex; flex-direction:column; gap:6px; font-size:10px;}
+.stat-row{display:flex; align-items:center; gap:6px;}
+.bar-bg{background:#333; height:8px; border-radius:4px; width:100%;}
+.bar-fill{height:100%; border-radius:4px; transition:width 1s ease-in-out;}
+.bar-fill.hp{background:#00ff00;}
+.bar-fill.atk{background:#ff4400;}
 .type-advantage-indicator{color:#00ff88; font-size:10px; margin-top:6px;}
 
 

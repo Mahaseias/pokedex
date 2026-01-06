@@ -11,7 +11,7 @@
 <body>
   <header class="topbar">
     <button class="mini burger burger-float" id="menu-toggle-btn" data-route="menu">≡ Menu</button>
-    <div class="version-badge" id="app-version">v30</div>
+    <div class="version-badge" id="app-version">v4.0</div>
   </header>
 
   <main class="container">
@@ -201,20 +201,40 @@
         <div class="row">
           <button class="primary" id="btn-battle">Simular</button>
         </div>
-        <div class="battle-arena-container">
+        <div class="battle-arena">
           <div id="pokemon-1-card" class="battle-card">
             <div class="battle-card-header"><span class="atk-power" id="p1-power">Poder: --</span></div>
             <img id="p1-img" class="battle-img" alt="Pokémon A">
             <h3 class="battle-name" id="p1-name">Pokémon A</h3>
             <div class="battle-types" id="p1-types"></div>
+            <div class="stats-mini">
+              <div class="stat-row">
+                <span>HP</span>
+                <div class="bar-bg"><div class="bar-fill hp" id="p1-hp"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>ATK</span>
+                <div class="bar-bg"><div class="bar-fill atk" id="p1-atk"></div></div>
+              </div>
+            </div>
             <div class="type-advantage-indicator" id="p1-advantage" style="display:none;">▲ Vantagem de Tipo!</div>
           </div>
-          <div class="versus-separator"><span>VS</span></div>
+          <div class="versus-circle"><span>VS</span></div>
           <div id="pokemon-2-card" class="battle-card">
             <div class="battle-card-header"><span class="atk-power" id="p2-power">Poder: --</span></div>
             <img id="p2-img" class="battle-img" alt="Pokémon B">
             <h3 class="battle-name" id="p2-name">Pokémon B</h3>
             <div class="battle-types" id="p2-types"></div>
+            <div class="stats-mini">
+              <div class="stat-row">
+                <span>HP</span>
+                <div class="bar-bg"><div class="bar-fill hp" id="p2-hp"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>ATK</span>
+                <div class="bar-bg"><div class="bar-fill atk" id="p2-atk"></div></div>
+              </div>
+            </div>
             <div class="type-advantage-indicator" id="p2-advantage" style="display:none;">▲ Vantagem de Tipo!</div>
           </div>
         </div>

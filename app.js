@@ -310,7 +310,7 @@ function renderWho(){
 
   const root = $("who-list");
   root.innerHTML = list.map(p => `
-    <div class="item" data-pid="${p.id}">
+    <div class="item" data-pid="${p.id}" data-type="${(p.types||[])[0] || ""}">
       <div class="thumb">
         <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy"
              onerror="this.onerror=null; this.src='${officialArt(p.id)}';" />
@@ -1178,10 +1178,12 @@ function simulateBattle(){
   const scoreB = power(pokeB, pokeA);
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
   let reason = "Empate! Rodem de novo.";
+  const advA = effectiveness(pokeA, pokeB);
+  const advB = effectiveness(pokeB, pokeA);
   if (winner === pokeA){
-    reason = `${pokeA.name} venceu. Vantagem contra: ${(pokeA.types||[]).map(typeLabel).join("/")} sobre ${(pokeB.types||[]).map(typeLabel).join("/")}.`;
+    reason = `${pokeA.name} venceu. ${typeLabel((pokeA.types||[])[0]||"")} é forte contra ${typeLabel((pokeB.types||[])[0]||"")}. Multiplicador: x${(advA/advB || 1).toFixed(2)}.`;
   } else if (winner === pokeB){
-    reason = `${pokeB.name} venceu. Vantagem contra: ${(pokeB.types||[]).map(typeLabel).join("/")} sobre ${(pokeA.types||[]).map(typeLabel).join("/")}.`;
+    reason = `${pokeB.name} venceu. ${typeLabel((pokeB.types||[])[0]||"")} é forte contra ${typeLabel((pokeA.types||[])[0]||"")}. Multiplicador: x${(advB/advA || 1).toFixed(2)}.`;
   }
 
   // montar cards
@@ -1202,19 +1204,35 @@ function simulateBattle(){
     advEl.style.display = adv > 1 ? "block" : "none";
     advEl.textContent = adv > 1 ? "▲ Vantagem de tipo!" : "";
   };
-  const advA = effectiveness(pokeA, pokeB);
-  const advB = effectiveness(pokeB, pokeA);
   fillCard("p1", pokeA, scoreA, advA);
   fillCard("p2", pokeB, scoreB, advB);
+  const hpA = Math.min(100, Math.max(10, Math.round(scoreA)));
+  const hpB = Math.min(100, Math.max(10, Math.round(scoreB)));
+  const atkA = Math.min(100, Math.max(10, Math.round(scoreA * 0.8)));
+  const atkB = Math.min(100, Math.max(10, Math.round(scoreB * 0.8)));
+  const hpElA = $("p1-hp");
+  const hpElB = $("p2-hp");
+  const atkElA = $("p1-atk");
+  const atkElB = $("p2-atk");
+  if (hpElA) hpElA.style.width = `${hpA}%`;
+  if (hpElB) hpElB.style.width = `${hpB}%`;
+  if (atkElA) atkElA.style.width = `${atkA}%`;
+  if (atkElB) atkElB.style.width = `${atkB}%`;
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
-  if (winner === pokeA){
-    cardA?.classList.add("winner-card");
-    cardB?.classList.add("loser-card");
-  } else if (winner === pokeB){
-    cardB?.classList.add("winner-card");
-    cardA?.classList.add("loser-card");
-  }
+  if (cardA) cardA.classList.add("shaking");
+  if (cardB) cardB.classList.add("shaking");
+  setTimeout(() => {
+    if (cardA) cardA.classList.remove("shaking");
+    if (cardB) cardB.classList.remove("shaking");
+    if (winner === pokeA){
+      cardA?.classList.add("winner-glow");
+      cardB?.classList.add("loser-fade");
+    } else if (winner === pokeB){
+      cardB?.classList.add("winner-glow");
+      cardA?.classList.add("loser-fade");
+    }
+  }, 1500);
 
   log.innerHTML = `
     <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
@@ -1228,8 +1246,8 @@ function updateBattlePreview(){
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
   const log = $("battle-log");
-  if (cardA) cardA.classList.remove("winner-card","loser-card");
-  if (cardB) cardB.classList.remove("winner-card","loser-card");
+  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade");
+  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade");
   if (log) log.textContent = "";
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
