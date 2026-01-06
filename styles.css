@@ -759,7 +759,7 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   transform:scale(0.98);
 }
 .battle-gif{width:80px; height:80px; object-fit:contain;}
-.battle-card-header{font-size:11px; margin-bottom:6px;}
+.battle-card-header{display:none;}
 .battle-img{width:120px; height:120px; object-fit:contain;}
 .battle-name{margin:8px 0; color:#4edede;}
 .battle-types{display:flex; justify-content:center; gap:6px; flex-wrap:wrap; font-size:10px;}
@@ -771,5 +771,24 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 .bar-fill.hp{background:#00ff00;}
 .bar-fill.atk{background:#ff4400;}
 .type-advantage-indicator{color:#00ff88; font-size:10px; margin-top:6px;}
+.battle-speech{
+  background:#0a2e2e;
+  border:2px solid #2a7a7a;
+  border-radius:12px;
+  padding:12px;
+  position:relative;
+  font-size:12px;
+}
+.battle-speech::after{
+  content:"";
+  position:absolute;
+  left:20px;
+  bottom:-10px;
+  width:0;
+  height:0;
+  border-left:10px solid transparent;
+  border-right:10px solid transparent;
+  border-top:10px solid #0a2e2e;
+}
 
 

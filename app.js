@@ -1178,12 +1178,17 @@ function simulateBattle(){
   const scoreB = power(pokeB, pokeA);
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
   let reason = "Empate! Rodem de novo.";
+  const fun = (winner, loser, adv) => {
+    const typeWin = typeLabel((winner.types||[])[0]||"");
+    const typeLose = typeLabel((loser.types||[])[0]||"");
+    return `Uau! ${winner.name} venceu! ${typeWin} é super efetivo contra ${typeLose}. (x${adv.toFixed(2)})`;
+  };
   const advA = effectiveness(pokeA, pokeB);
   const advB = effectiveness(pokeB, pokeA);
   if (winner === pokeA){
-    reason = `${pokeA.name} venceu. ${typeLabel((pokeA.types||[])[0]||"")} é forte contra ${typeLabel((pokeB.types||[])[0]||"")}. Multiplicador: x${(advA/advB || 1).toFixed(2)}.`;
+    reason = fun(pokeA, pokeB, advA/advB || 1);
   } else if (winner === pokeB){
-    reason = `${pokeB.name} venceu. ${typeLabel((pokeB.types||[])[0]||"")} é forte contra ${typeLabel((pokeA.types||[])[0]||"")}. Multiplicador: x${(advB/advA || 1).toFixed(2)}.`;
+    reason = fun(pokeB, pokeA, advB/advA || 1);
   }
 
   // montar cards
@@ -1232,11 +1237,11 @@ function simulateBattle(){
       cardB?.classList.add("winner-glow");
       cardA?.classList.add("loser-fade");
     }
+    playLevelUpSound();
   }, 1500);
 
   log.innerHTML = `
-    <div><strong>${escapeHtml(pokeA.name)}</strong> (${scoreA}) vs <strong>${escapeHtml(pokeB.name)}</strong> (${scoreB})</div>
-    <div class="muted small">${reason}</div>
+    <div class="battle-speech">${escapeHtml(reason)}</div>
   `;
 }
 
@@ -1246,8 +1251,8 @@ function updateBattlePreview(){
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
   const log = $("battle-log");
-  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade");
-  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade");
+  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
+  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
   if (log) log.textContent = "";
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
@@ -1263,6 +1268,33 @@ function updateBattlePreview(){
   };
   fillImg("p1-img", pokeA);
   fillImg("p2-img", pokeB);
+  const hpElA = $("p1-hp");
+  const hpElB = $("p2-hp");
+  const atkElA = $("p1-atk");
+  const atkElB = $("p2-atk");
+  if (hpElA) hpElA.style.width = "100%";
+  if (hpElB) hpElB.style.width = "100%";
+  if (atkElA) atkElA.style.width = "100%";
+  if (atkElB) atkElB.style.width = "100%";
+}
+
+function playLevelUpSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      gain.gain.value = 0.08;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.1);
+    });
+  } catch(_) {}
 }
 
 /* ---------------------------
