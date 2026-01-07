@@ -84,7 +84,8 @@ function setRoute(route){
 function badge(text){ return `<span class="badge">${escapeHtml(text)}</span>`; }
 function spriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${Number(id)}.png`; }
 function officialArt(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`; }
-function getSprite(p){ return officialArt(p.id) || spriteUrl(p.id); }
+function getSprite(p){ return officialArt(p.id); }
+function getFallbackSprite(p){ return spriteUrl(p.id); }
 
 function normalizeName(s){
   return String(s || "")
@@ -313,7 +314,7 @@ function renderWho(){
     <div class="item" data-pid="${p.id}" data-type="${(p.types||[])[0] || ""}">
       <div class="thumb">
         <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy"
-             onerror="this.onerror=null; this.src='${officialArt(p.id)}';" />
+             onerror="this.onerror=null; this.src='${spriteUrl(p.id)}';" />
         </div>
       <div class="item-main">
         <div><strong>#${p.id.toString().padStart(3,"0")} ${escapeHtml(p.name)}</strong></div>
@@ -358,7 +359,7 @@ function showWhoDetail(p){
         <div class="emerald-id">No.${p.id.toString().padStart(3,"0")}</div>
         <div class="emerald-sprite">
           <img src="${getSprite(p)}" alt="Sprite de ${escapeHtml(p.name)}" loading="lazy"
-               onerror="this.onerror=null; this.src='${officialArt(p.id)}';" />
+               onerror="this.onerror=null; this.src='${spriteUrl(p.id)}';" />
         </div>
         <div class="emerald-name">${escapeHtml(p.name)}</div>
         <div class="emerald-sub">${(p.types||[]).map(typeLabel).join(" / ")}</div>
@@ -1134,13 +1135,13 @@ function simulateBattle(){
   const idA = Number(selA.value);
   const idB = Number(selB.value);
   if (idA === idB){
-    log.textContent = "Escolha dois Pokémon diferentes.";
+    renderBattleLog("Type advantage", "SEM BATALHA", "Escolha dois Pokemon diferentes.");
     return;
   }
   const pokeA = state.pokedex.find(p => p.id === idA);
   const pokeB = state.pokedex.find(p => p.id === idB);
   if (!pokeA || !pokeB){
-    log.textContent = "Pokémon inválido.";
+    renderBattleLog("Type advantage", "ERRO", "Pokemon invalido.");
     return;
   }
   const effectiveness = (atk, def) => {
@@ -1169,52 +1170,36 @@ function simulateBattle(){
     }
     return mult || 1;
   };
-  const power = (p, target) => {
+  const calcPower = (p, target) => {
     const base = 50 + (p.types?.length||1)*8;
     const rand = Math.floor(Math.random()*10);
-    return Math.round((base + rand) * effectiveness(p, target));
+    const mult = effectiveness(p, target);
+    const total = Math.round((base + rand) * mult);
+    return { base, rand, mult, total };
   };
-  const scoreA = power(pokeA, pokeB);
-  const scoreB = power(pokeB, pokeA);
-  const winner = scoreA === scoreB ? null : (scoreA > scoreB ? pokeA : pokeB);
-  let reason = "Empate! Rodem de novo.";
-  const fun = (winner, loser, adv) => {
-    const typeWin = typeLabel((winner.types||[])[0]||"");
-    const typeLose = typeLabel((loser.types||[])[0]||"");
-    return `Uau! ${winner.name} venceu! ${typeWin} é super efetivo contra ${typeLose}. (x${adv.toFixed(2)})`;
-  };
-  const advA = effectiveness(pokeA, pokeB);
-  const advB = effectiveness(pokeB, pokeA);
-  if (winner === pokeA){
-    reason = fun(pokeA, pokeB, advA/advB || 1);
-  } else if (winner === pokeB){
-    reason = fun(pokeB, pokeA, advB/advA || 1);
+  const scoreA = calcPower(pokeA, pokeB);
+  const scoreB = calcPower(pokeB, pokeA);
+  const winner = scoreA.total === scoreB.total ? null : (scoreA.total > scoreB.total ? pokeA : pokeB);
+  const winData = winner === pokeA ? scoreA : scoreB;
+  const loseData = winner === pokeA ? scoreB : scoreA;
+  const winType = winner ? typeLabel((winner.types||[])[0]||"") : "";
+  const loseType = winner === pokeA ? typeLabel((pokeB.types||[])[0]||"") : typeLabel((pokeA.types||[])[0]||"");
+
+  let badge = "EQUILIBRADO";
+  if (winner){
+    if (winData.mult >= 1.4) badge = "SUPER EFETIVO!";
+    else if (winData.mult <= 0.8) badge = "POUCO EFETIVO";
   }
 
-  // montar cards
-  const fillCard = (cardPrefix, poke, score, adv) => {
-    const card = $(`${cardPrefix}-card`);
-    const powerEl = $(`${cardPrefix}-power`);
-    const imgEl = $(`${cardPrefix}-img`);
-    const nameEl = $(`${cardPrefix}-name`);
-    const typesEl = $(`${cardPrefix}-types`);
-    const advEl = $(`${cardPrefix}-advantage`);
-    if (!card || !powerEl || !imgEl || !nameEl || !typesEl || !advEl) return;
-    card.classList.remove("winner-card", "loser-card");
-    powerEl.textContent = `Poder: ${score}`;
-    imgEl.src = getSprite(poke);
-    imgEl.alt = poke.name;
-    nameEl.textContent = poke.name;
-    typesEl.innerHTML = (poke.types||[]).map(t => `<span class="type-badge">${escapeHtml(typeLabel(t))}</span>`).join("");
-    advEl.style.display = adv > 1 ? "block" : "none";
-    advEl.textContent = adv > 1 ? "▲ Vantagem de tipo!" : "";
-  };
-  fillCard("p1", pokeA, scoreA, advA);
-  fillCard("p2", pokeB, scoreB, advB);
-  const hpA = Math.min(100, Math.max(10, Math.round(scoreA)));
-  const hpB = Math.min(100, Math.max(10, Math.round(scoreB)));
-  const atkA = Math.min(100, Math.max(10, Math.round(scoreA * 0.8)));
-  const atkB = Math.min(100, Math.max(10, Math.round(scoreB * 0.8)));
+  let reason = "Empate! Rodem de novo.";
+  if (winner){
+    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}.`;
+  }
+
+  const hpA = Math.min(100, Math.max(10, Math.round(scoreA.total)));
+  const hpB = Math.min(100, Math.max(10, Math.round(scoreB.total)));
+  const atkA = Math.min(100, Math.max(10, Math.round((scoreA.base + scoreA.rand) * 0.8)));
+  const atkB = Math.min(100, Math.max(10, Math.round((scoreB.base + scoreB.rand) * 0.8)));
   const hpElA = $("p1-hp");
   const hpElB = $("p2-hp");
   const atkElA = $("p1-atk");
@@ -1223,6 +1208,8 @@ function simulateBattle(){
   if (hpElB) hpElB.style.width = `${hpB}%`;
   if (atkElA) atkElA.style.width = `${atkA}%`;
   if (atkElB) atkElB.style.width = `${atkB}%`;
+  setAdvantage("p1", scoreA.mult);
+  setAdvantage("p2", scoreB.mult);
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
   if (cardA) cardA.classList.add("shaking");
@@ -1240,9 +1227,7 @@ function simulateBattle(){
     playLevelUpSound();
   }, 1500);
 
-  log.innerHTML = `
-    <div class="battle-speech">${escapeHtml(reason)}</div>
-  `;
+  renderBattleLog("Type advantage", badge, reason);
 }
 
 function updateBattlePreview(){
@@ -1250,24 +1235,29 @@ function updateBattlePreview(){
   const selB = $("battle-b");
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
-  const log = $("battle-log");
   if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
   if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
-  if (log) log.textContent = "";
+  renderBattleLog("Type advantage", "PRONTO", "Escolha os dois Pokemon e clique em Simular.");
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
   const pokeB = state.pokedex.find(p => p.id === Number(selB.value));
-    const fillImg = (id, poke) => {
-    const img = $(id);
+  const fillCard = (prefix, poke) => {
+    const img = $(`${prefix}-img`);
+    const nameEl = $(`${prefix}-name`);
+    const typesEl = $(`${prefix}-types`);
+    const advEl = $(`${prefix}-advantage`);
     if (img && poke){
       img.src = getSprite(poke);
       img.alt = poke.name;
       img.style.display = "block";
-      img.onerror = () => { img.onerror = null; img.src = officialArt(poke.id); };
+      img.onerror = () => { img.onerror = null; img.src = spriteUrl(poke.id); };
     }
+    if (nameEl) nameEl.textContent = poke ? poke.name : "Pokemon";
+    if (typesEl) typesEl.innerHTML = poke ? (poke.types||[]).map(t => `<span class="type-badge">${escapeHtml(typeLabel(t))}</span>`).join("") : "";
+    if (advEl) advEl.style.display = "none";
   };
-  fillImg("p1-img", pokeA);
-  fillImg("p2-img", pokeB);
+  fillCard("p1", pokeA);
+  fillCard("p2", pokeB);
   const hpElA = $("p1-hp");
   const hpElB = $("p2-hp");
   const atkElA = $("p1-atk");
@@ -1276,6 +1266,30 @@ function updateBattlePreview(){
   if (hpElB) hpElB.style.width = "100%";
   if (atkElA) atkElA.style.width = "100%";
   if (atkElB) atkElB.style.width = "100%";
+}
+
+function renderBattleLog(title, badge, text){
+  const log = $("battle-log");
+  if (!log) return;
+  log.innerHTML = `
+    <div class="battle-log-title">${escapeHtml(title)}</div>
+    <div class="battle-log-badge">${escapeHtml(badge)}</div>
+    <div class="battle-log-text">${escapeHtml(text)}</div>
+  `;
+}
+
+function setAdvantage(prefix, mult){
+  const advEl = $(`${prefix}-advantage`);
+  if (!advEl) return;
+  if (mult > 1.05){
+    advEl.style.display = "block";
+    advEl.textContent = "Vantagem de tipo";
+  } else if (mult < 0.95){
+    advEl.style.display = "block";
+    advEl.textContent = "Desvantagem";
+  } else {
+    advEl.style.display = "none";
+  }
 }
 
 function playLevelUpSound(){
@@ -1421,4 +1435,5 @@ function bindFullscreen(){
   document.addEventListener("fullscreenchange", updateIcon);
   updateIcon();
 }
+
 
