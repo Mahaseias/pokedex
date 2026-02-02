@@ -506,6 +506,11 @@ function similarity(a, b){
   return (longer.length - dist) / longer.length;
 }
 
+const OCR_SIMILARITY_MIN = 0.95;
+function normalizeMatchText(text){
+  return normalizeName(text).replace(/[^a-z0-9]+/g, "");
+}
+
 /* ---------------------------
    MÓDULO 2 (Scanner QR / Nome)
 ---------------------------- */
@@ -658,34 +663,36 @@ function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
 
 function matchNameFromText(text){
   const normRaw = normalizeName(text);
+  const compactRaw = normalizeMatchText(text);
+  if (!compactRaw) return null;
   const tokens = normRaw.split(/[^a-z0-9]+/).filter(Boolean);
-  const lowerRaw = normRaw.toLowerCase();
 
   // 1) match exato por token
   for (const tok of tokens){
-    const found = state.pokedex.find(p => normalizeName(p.name) === tok);
+    const found = state.pokedex.find(p => normalizeMatchText(p.name) === tok);
     if (found) return found;
   }
   // 2) substring direta (resolve "Venusaur ex", "Zapdos da Equipe Rocket")
   for (const p of state.pokedex){
-    const target = normalizeName(p.name);
-    if (lowerRaw.includes(target)) return p;
+    const target = normalizeMatchText(p.name);
+    if (compactRaw.includes(target)) return p;
   }
-  // 3) fuzzy palavra a palavra (tolerante a Venu5aur)
+  // 3) similaridade alta (>=95%) em token ou texto completo
   let best = null;
   let bestScore = 0;
-  for (const word of tokens){
+  const candidates = [compactRaw, ...tokens];
+  for (const word of candidates){
+    if (!word || word.length < 3) continue;
     for (const p of state.pokedex){
-      const s = similarity(word, normalizeName(p.name));
+      const s = similarity(word, normalizeMatchText(p.name));
       if (s > bestScore){
         bestScore = s;
         best = p;
       }
     }
   }
-  if (best && bestScore >= 0.5) return best;
-  // 4) fallback geral
-  return fuzzyBest(normRaw);
+  if (best && bestScore >= OCR_SIMILARITY_MIN) return best;
+  return null;
 }
 
 async function ocrSnapshot(opts = { autoStop: false }){

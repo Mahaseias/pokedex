@@ -886,4 +886,83 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   .versus-circle{margin:0;}
 }
 
+@media (max-width: 600px){
+  .container{padding:12px 10px 16px;}
+  .row{gap:8px;}
+  .field{min-width:140px;}
+  input, select{min-width:0;}
+
+  .modal{
+    align-items:flex-start;
+    overflow-y:auto;
+    padding:10px;
+  }
+  .modal-card{
+    margin:6px;
+    width:calc(100% - 12px);
+  }
+  .modal-card.emerald{display:block;}
+  #who-prev, #who-next{
+    position:static;
+    transform:none;
+  }
+  .pokemon-profile-container{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .emerald-left.profile-card,
+  .emerald-right.info-card{
+    width:100%;
+    min-width:0;
+  }
+  .resumo-container{max-height:120px;}
+
+  .emu-shell{
+    width:100%;
+    max-width:100%;
+    padding:12px;
+  }
+  .emu-controls{max-width:100%;}
+  .dpad{
+    grid-template-columns: repeat(3, 30px);
+    grid-template-rows: repeat(3, 30px);
+    gap:3px;
+  }
+  .dpad .k{
+    width:30px;
+    height:30px;
+    font-size:16px;
+  }
+  .ab{
+    width:100px;
+    height:78px;
+    margin-left:0;
+  }
+  .ab .k{
+    width:46px;
+    height:34px;
+    font-size:13px;
+  }
+  .emu-row{
+    gap:10px;
+    max-width:100%;
+    justify-content:space-around;
+  }
+  .ss .k{font-size:11px; padding:6px 8px;}
+
+  #view-battle .card{padding:12px;}
+  .battle-stage{gap:10px;}
+  .battle-card{
+    width:min(46vw, 180px);
+    padding:8px;
+  }
+  .battle-img{width:80px; height:80px;}
+  .battle-name{font-size:12px;}
+  .battle-log{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .battle-log-text{grid-column:1;}
+}
+
 
