@@ -16,6 +16,7 @@ const state = {
     up:false, down:false, left:false, right:false,
     A:false, B:false, START:false, SELECT:false
   },
+  battleTimer: null,
   speech: {
     currentUtter: null
   }
@@ -349,7 +350,7 @@ function showWhoDetail(p){
   const detail = $("who-detail");
   detail.innerHTML = `
     <div class="modal-card emerald">
-      <div class="modal-actions">
+      <div class="modal-actions top-actions">
         <button class="modal-nav" id="who-prev">&#9664;</button>
         <button class="modal-close" id="who-close">X</button>
         <button class="modal-nav" id="who-next">&#9654;</button>
@@ -370,6 +371,10 @@ function showWhoDetail(p){
           <div class="emerald-row">ABILITY: ${abilities.slice(0,1).map(escapeHtml).join(", ") || "-"}</div>
           <div class="emerald-row note resumo-container"><strong>Resumo:</strong> ${escapeHtml(summary)}</div>
         </div>
+      </div>
+      <div class="modal-actions bottom-actions">
+        <button class="modal-nav" id="who-prev-bottom">&#9664; Anterior</button>
+        <button class="modal-nav" id="who-next-bottom">Próximo &#9654;</button>
       </div>
     </div>
   `;
@@ -398,6 +403,10 @@ function showWhoDetail(p){
   const nextBtn = $("who-next");
   if (prevBtn) prevBtn.onclick = () => showAdjacentPokemon(p.id, -1);
   if (nextBtn) nextBtn.onclick = () => showAdjacentPokemon(p.id, 1);
+  const prevBottom = $("who-prev-bottom");
+  const nextBottom = $("who-next-bottom");
+  if (prevBottom) prevBottom.onclick = () => showAdjacentPokemon(p.id, -1);
+  if (nextBottom) nextBottom.onclick = () => showAdjacentPokemon(p.id, 1);
 
   // Leitura em voz (pokeDex style)
   speakSummary(p, summary);
@@ -507,8 +516,20 @@ function similarity(a, b){
 }
 
 const OCR_SIMILARITY_MIN = 0.95;
+const OCR_WHITELIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ0123456789'-. ";
 function normalizeMatchText(text){
   return normalizeName(text).replace(/[^a-z0-9]+/g, "");
+}
+function normalizeOcrText(text){
+  return normalizeName(text)
+    .replace(/0/g, "o")
+    .replace(/1/g, "l")
+    .replace(/2/g, "z")
+    .replace(/3/g, "e")
+    .replace(/4/g, "a")
+    .replace(/5/g, "s")
+    .replace(/7/g, "t")
+    .replace(/8/g, "b");
 }
 
 /* ---------------------------
@@ -632,28 +653,33 @@ async function ensureOcr(){
     await worker.initialize("eng");
   }
   await worker.setParameters({
-    tessedit_pageseg_mode: "7", // single text line
-    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ "
+    tessedit_pageseg_mode: "7",
+    tessedit_char_whitelist: OCR_WHITELIST,
+    preserve_interword_spaces: "1"
   });
   state.ocrWorker = worker;
   return worker;
 }
 
-// Converte uma região para PB com upscale e retorna um canvas pronto para OCR.
-function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
+function makeCropCanvas(source, { x, y, w, h, scale = 2.5 }){
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   canvas.width = Math.floor(w * scale);
   canvas.height = Math.floor(h * scale);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(video, x, y, w, h, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, x, y, w, h, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
 
+// Converte uma região para PB com upscale e retorna um canvas pronto para OCR.
+function makeBinaryCanvas(source, { x, y, w, h, scale = 2.5, invert = false, threshold = 90 }){
+  const canvas = makeCropCanvas(source, { x, y, w, h, scale });
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = img.data;
-  const threshFixed = 90; // mais permissivo para imagens escuras
   for (let i = 0; i < data.length; i += 4){
     const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-    let v = avg < threshFixed ? 0 : 255;
+    let v = avg < threshold ? 0 : 255;
     if (invert) v = v === 0 ? 255 : 0;
     data[i] = data[i+1] = data[i+2] = v;
   }
@@ -662,8 +688,8 @@ function makeBinaryCanvas(video, { x, y, w, h, scale = 2.5, invert = false }){
 }
 
 function matchNameFromText(text){
-  const normRaw = normalizeName(text);
-  const compactRaw = normalizeMatchText(text);
+  const normRaw = normalizeOcrText(text);
+  const compactRaw = normRaw.replace(/[^a-z0-9]+/g, "");
   if (!compactRaw) return null;
   const tokens = normRaw.split(/[^a-z0-9]+/).filter(Boolean);
 
@@ -704,14 +730,19 @@ async function ocrSnapshot(opts = { autoStop: false }){
       return;
     }
     // ROI centralizada e simples para evitar cortes inválidos
-  const vw = video.videoWidth || 1;
-  const vh = video.videoHeight || 1;
-  const cropW = Math.floor(vw * 0.8);
-  const cropH = Math.min(260, Math.floor(vh * 0.18)); // faixa mais alta
-  const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-  const srcY = Math.max(0, Math.floor(vh * 0.32)); // mais abaixo
+    const vw = video.videoWidth || 1;
+    const vh = video.videoHeight || 1;
+    const cropW = Math.floor(vw * 0.84);
+    const cropH = Math.min(300, Math.floor(vh * 0.22));
+    const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
+    const roiY1 = Math.max(0, Math.floor(vh * 0.22));
+    const roiY2 = Math.max(0, Math.floor(vh * 0.32));
+    const rois = [
+      { x: srcX, y: roiY1, w: cropW, h: cropH },
+      { x: srcX, y: roiY2, w: cropW, h: cropH }
+    ];
 
-    console.log("OCR ROI", { video: { vw, vh }, crop: { srcX, srcY, cropW, cropH }, ready: video.readyState });
+    console.log("OCR ROI", { video: { vw, vh }, rois, ready: video.readyState });
 
     // Preview colorido (antes da binarização)
     const preview = $("previewCanvas");
@@ -720,23 +751,20 @@ async function ocrSnapshot(opts = { autoStop: false }){
       preview.height = cropH;
       const pctx = preview.getContext("2d");
       pctx.clearRect(0,0,preview.width,preview.height);
-      pctx.drawImage(video, srcX, srcY, cropW, cropH, 0, 0, preview.width, preview.height);
+      pctx.drawImage(video, srcX, roiY1, cropW, cropH, 0, 0, preview.width, preview.height);
     }
-
-    // duas variações: normal e invertida
-    const canvasNormal = makeBinaryCanvas(video, { x: srcX, y: srcY, w: cropW, h: cropH, invert: false });
-    const canvasInvert = makeBinaryCanvas(video, { x: srcX, y: srcY, w: cropW, h: cropH, invert: true });
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
-  const texts = [];
+    const texts = [];
 
-  // helper para tentar leitura em um canvas
-  const readCanvas = async (canvas) => {
-    try{
+    // helper para tentar leitura em um canvas
+    const readCanvas = async (canvas, psm = "7") => {
+      try{
         const { data: ocrData } = await worker.recognize(canvas, {
-          tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ ",
-          tessedit_pageseg_mode: "7"
+          tessedit_char_whitelist: OCR_WHITELIST,
+          tessedit_pageseg_mode: psm,
+          preserve_interword_spaces: "1"
         });
         if (ocrData.text) texts.push(ocrData.text);
 
@@ -753,8 +781,9 @@ async function ocrSnapshot(opts = { autoStop: false }){
         console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
         if (window.Tesseract && window.Tesseract.recognize){
           const res = await window.Tesseract.recognize(canvas, "eng", {
-            tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚÂÊÎÔÛÃÕÄÖÜáéíóúâêîôûãõäöüçÇ ",
-            tessedit_pageseg_mode: "7"
+            tessedit_char_whitelist: OCR_WHITELIST,
+            tessedit_pageseg_mode: psm,
+            preserve_interword_spaces: "1"
           });
           if (res.data?.text) texts.push(res.data.text);
         } else if (window.OCRAD){
@@ -768,8 +797,17 @@ async function ocrSnapshot(opts = { autoStop: false }){
       }
     };
 
-    await readCanvas(canvasNormal);
-    await readCanvas(canvasInvert);
+    const thresholds = [90, 120];
+    for (const roi of rois){
+      const colorCanvas = makeCropCanvas(video, { ...roi, scale: 2.5 });
+      await readCanvas(colorCanvas, "6");
+      for (const thr of thresholds){
+        const canvasNormal = makeBinaryCanvas(video, { ...roi, invert: false, threshold: thr });
+        const canvasInvert = makeBinaryCanvas(video, { ...roi, invert: true, threshold: thr });
+        await readCanvas(canvasNormal, "7");
+        await readCanvas(canvasInvert, "7");
+      }
+    }
 
     const rawText = texts.join(" ").trim();
     console.log("OCR bruto:", rawText);
@@ -1139,6 +1177,11 @@ function simulateBattle(){
   const selB = $("battle-b");
   const log = $("battle-log");
   if (!selA || !selB || !log) return;
+  if (state.battleTimer){
+    clearTimeout(state.battleTimer);
+    state.battleTimer = null;
+  }
+  resetBattleState();
   const idA = Number(selA.value);
   const idB = Number(selB.value);
   if (idA === idB){
@@ -1201,7 +1244,7 @@ function simulateBattle(){
   let reason = "Empate! Rodem de novo.";
   if (winner){
     const loser = winner === pokeA ? pokeB : pokeA;
-    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}. ${loser.name} ficou fora de combate (morreu só no jogo).`;
+    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}. ${loser.name} ficou fora de combate, leve até um pokecenter.`;
   }
 
   const hpA = Math.min(100, Math.max(10, Math.round(scoreA.total)));
@@ -1226,15 +1269,15 @@ function simulateBattle(){
   const cardB = $("pokemon-2-card");
   if (cardA) cardA.classList.add("shaking");
   if (cardB) cardB.classList.add("shaking");
-  setTimeout(() => {
+  state.battleTimer = setTimeout(() => {
     if (cardA) cardA.classList.remove("shaking");
     if (cardB) cardB.classList.remove("shaking");
     if (winner === pokeA){
       cardA?.classList.add("winner-glow");
-      cardB?.classList.add("loser-fade");
+      cardB?.classList.add("loser-fade","defeated");
     } else if (winner === pokeB){
       cardB?.classList.add("winner-glow");
-      cardA?.classList.add("loser-fade");
+      cardA?.classList.add("loser-fade","defeated");
     }
     playLevelUpSound();
   }, 1500);
@@ -1247,8 +1290,8 @@ function updateBattlePreview(){
   const selB = $("battle-b");
   const cardA = $("pokemon-1-card");
   const cardB = $("pokemon-2-card");
-  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
-  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking");
+  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
+  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
   renderBattleLog("Type advantage", "PRONTO", "Escolha os dois Pokemon e clique em Simular.");
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
@@ -1278,6 +1321,23 @@ function updateBattlePreview(){
   if (hpElB) hpElB.style.width = "100%";
   if (atkElA) atkElA.style.width = "100%";
   if (atkElB) atkElB.style.width = "100%";
+}
+
+function resetBattleState(){
+  const cardA = $("pokemon-1-card");
+  const cardB = $("pokemon-2-card");
+  if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
+  if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
+  const hpElA = $("p1-hp");
+  const hpElB = $("p2-hp");
+  const atkElA = $("p1-atk");
+  const atkElB = $("p2-atk");
+  if (hpElA) hpElA.style.width = "100%";
+  if (hpElB) hpElB.style.width = "100%";
+  if (atkElA) atkElA.style.width = "100%";
+  if (atkElB) atkElB.style.width = "100%";
+  setAdvantage("p1", 1);
+  setAdvantage("p2", 1);
 }
 
 function renderBattleLog(title, badge, text){

@@ -211,6 +211,12 @@ button.mini{
   align-items:center;
   margin-bottom:6px;
 }
+.bottom-actions{
+  display:none;
+  justify-content:center;
+  gap:10px;
+  margin-top:10px;
+}
 #who-prev, #who-next{
   position:absolute;
   top:50%;
@@ -819,6 +825,24 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   padding:6px;
   border:2px solid rgba(0,0,0,.15);
 }
+.battle-card.defeated::before{
+  content:"X";
+  position:absolute;
+  top:8px;
+  left:8px;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  font-size:18px;
+  border:2px solid #fff;
+  z-index:3;
+}
 .battle-name{margin:8px 0; color:#1a2b1a;}
 .battle-types{display:flex; justify-content:center; gap:6px; flex-wrap:wrap; font-size:10px;}
 .type-badge{padding:4px 8px; border-radius:10px; border:1px solid var(--border-strong); background:rgba(0,0,0,.2);}
@@ -910,6 +934,9 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
     padding:6px 8px;
     font-size:10px;
   }
+  .top-actions{justify-content:flex-end;}
+  .top-actions .modal-nav{display:none;}
+  .bottom-actions{display:flex;}
   #who-prev, #who-next{
     position:static;
     transform:none;
