@@ -816,12 +816,8 @@ async function ocrSnapshot(opts = { autoStop: false }){
       $("scan-status").textContent = `Nome detectado: ${found.name}`;
       const displayResultado = $("resultadoNome");
       if (displayResultado) displayResultado.innerText = `Sucesso: ${found.name}`;
-      const ok = window.confirm(`Confirmar Pokémon: ${found.name}?`);
-      if (ok){
-        showWhoDetail(found);
-      } else {
-        $("scan-status").textContent = "Cancelado. Tente novamente.";
-      }
+      showWhoDetail(found);
+      setRoute("who");
       if (opts.autoStop) stopCamera();
     } else {
       const preview = $("previewCanvas");
