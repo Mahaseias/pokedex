@@ -1200,19 +1200,24 @@ function simulateBattle(){
 
   let reason = "Empate! Rodem de novo.";
   if (winner){
-    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}.`;
+    const loser = winner === pokeA ? pokeB : pokeA;
+    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}. ${loser.name} ficou fora de combate (morreu só no jogo).`;
   }
 
   const hpA = Math.min(100, Math.max(10, Math.round(scoreA.total)));
   const hpB = Math.min(100, Math.max(10, Math.round(scoreB.total)));
+  let finalHpA = hpA;
+  let finalHpB = hpB;
+  if (winner === pokeA) finalHpB = 0;
+  if (winner === pokeB) finalHpA = 0;
   const atkA = Math.min(100, Math.max(10, Math.round((scoreA.base + scoreA.rand) * 0.8)));
   const atkB = Math.min(100, Math.max(10, Math.round((scoreB.base + scoreB.rand) * 0.8)));
   const hpElA = $("p1-hp");
   const hpElB = $("p2-hp");
   const atkElA = $("p1-atk");
   const atkElB = $("p2-atk");
-  if (hpElA) hpElA.style.width = `${hpA}%`;
-  if (hpElB) hpElB.style.width = `${hpB}%`;
+  if (hpElA) hpElA.style.width = `${finalHpA}%`;
+  if (hpElB) hpElB.style.width = `${finalHpB}%`;
   if (atkElA) atkElA.style.width = `${atkA}%`;
   if (atkElB) atkElB.style.width = `${atkB}%`;
   setAdvantage("p1", scoreA.mult);

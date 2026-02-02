@@ -891,6 +891,8 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   .row{gap:8px;}
   .field{min-width:140px;}
   input, select{min-width:0;}
+  h1{font-size:18px;}
+  h2{font-size:12px;}
 
   .modal{
     align-items:flex-start;
@@ -902,6 +904,12 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
     width:calc(100% - 12px);
   }
   .modal-card.emerald{display:block;}
+  .modal-actions{gap:6px;}
+  .modal-actions .modal-nav,
+  .modal-actions .modal-close{
+    padding:6px 8px;
+    font-size:10px;
+  }
   #who-prev, #who-next{
     position:static;
     transform:none;
@@ -915,6 +923,11 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
     width:100%;
     min-width:0;
   }
+  .emerald-left.profile-card{padding:10px;}
+  .emerald-sprite img{max-height:200px; object-fit:contain;}
+  .emerald-name{font-size:12px;}
+  .emerald-sub{font-size:10px;}
+  .emerald-row{font-size:11px;}
   .resumo-container{max-height:120px;}
 
   .emu-shell{
@@ -963,6 +976,21 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
     gap:6px;
   }
   .battle-log-text{grid-column:1;}
+}
+
+@media (max-width: 480px){
+  .modal{padding:8px;}
+  .modal-card{margin:4px; width:calc(100% - 8px);}
+  .emerald-sprite img{max-height:170px;}
+  .emerald-row{padding:6px 6px;}
+  .resumo-container{max-height:105px;}
+
+  .battle-arena{gap:8px; padding:10px; border-width:3px;}
+  .versus-circle{width:42px; height:42px; font-size:12px;}
+  .battle-card{width:min(44vw, 160px);}
+  .battle-img{width:72px; height:72px;}
+  .battle-types{font-size:9px;}
+  .stats-mini{font-size:9px;}
 }
 
 
