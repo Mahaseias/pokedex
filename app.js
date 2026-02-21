@@ -119,6 +119,23 @@ function typeLabel(t){ return TYPE_PT[t] || t; }
 
 const TRAINER_AVATAR_DIR = "./assets/trainers";
 const TRAINER_REGION_ORDER = ["Kanto","Johto","Hoenn","Sinnoh","Unova","Kalos","Alola","Galar","Paldea"];
+const CARD_MODEL_BY_REGION = {
+  Kanto: "card-basico",
+  Johto: "card-intermediario",
+  Hoenn: "card-intermediario",
+  Sinnoh: "card-avancado",
+  Unova: "card-avancado",
+  Kalos: "card-avancado",
+  Alola: "card-elite",
+  Galar: "card-elite",
+  Paldea: "card-elite"
+};
+const CARD_MODEL_LABEL = {
+  "card-basico": "CARD BASICO",
+  "card-intermediario": "CARD INTERMEDIARIO",
+  "card-avancado": "CARD AVANCADO",
+  "card-elite": "CARD ELITE"
+};
 const PRESET_TRAINERS = [
   { id: "ash-kanto", name: "Ash", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/ash.png`, team: [25, 1, 6, 12, 16, 143] },
   { id: "gary-kanto", name: "Gary", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/blue.png`, team: [133, 59, 65, 112, 130, 3] },
@@ -1457,6 +1474,26 @@ function trainerAvatarFallback(name){
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+function getBattleCardModel(region){
+  return CARD_MODEL_BY_REGION[region] || "card-avancado";
+}
+
+function getBattleCardElementByPrefix(prefix){
+  if (prefix === "p1") return $("pokemon-1-card");
+  if (prefix === "p2") return $("pokemon-2-card");
+  return null;
+}
+
+function applyBattleCardModel(prefix, region){
+  const cardEl = getBattleCardElementByPrefix(prefix);
+  if (!cardEl) return;
+  const model = getBattleCardModel(region);
+  cardEl.classList.remove("card-basico", "card-intermediario", "card-avancado", "card-elite");
+  cardEl.classList.add(model);
+  const tagEl = cardEl.querySelector(".battle-tag");
+  if (tagEl) tagEl.textContent = CARD_MODEL_LABEL[model] || "CARD";
+}
+
 function updateBattleTrainerCard(prefix, trainer, fallbackName){
   const trainerNameEl = $(`${prefix}-trainer-name`);
   const trainerRegionEl = $(`${prefix}-trainer-region`);
@@ -1468,6 +1505,7 @@ function updateBattleTrainerCard(prefix, trainer, fallbackName){
   if (trainerNameEl) trainerNameEl.textContent = trainer?.name || fallbackName;
   if (trainerRegionEl) trainerRegionEl.textContent = trainerRegion;
   if (trainerBadgeEl) trainerBadgeEl.textContent = trainerRegion.toUpperCase();
+  applyBattleCardModel(prefix, trainerRegion);
   if (trainerAvatarEl){
     trainerAvatarEl.alt = `Treinador ${trainerName}`;
     trainerAvatarEl.src = trainer?.avatar || trainerAvatarFallback(trainerName);
