@@ -732,7 +732,9 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   padding:16px;
   border-radius:20px;
   border:4px solid #ffcc00;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
   position:relative;
 }
 .battle-arena::before{
@@ -759,7 +761,8 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   justify-content:center;
   font-weight:bold;
   z-index:5;
-  margin:-25px 0;
+  margin:0;
+  flex:0 0 auto;
   box-shadow:0 0 10px rgba(0,0,0,0.5);
 }
 .battle-card{
@@ -781,11 +784,10 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   --atk-color:#ff3d14;
   background:var(--card-bg);
   border:4px solid var(--card-border);
-  border-radius:22px;
-  padding:12px 12px 10px;
+  border-radius:18px;
+  padding:10px;
   text-align:left;
-  width:240px;
-  aspect-ratio:3 / 4.1;
+  width:230px;
   color:var(--card-fg);
   font-family:var(--font-title);
   position:relative;
@@ -794,11 +796,11 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
     0 12px 24px rgba(0,0,0,.35),
     inset 0 0 0 2px var(--card-inset),
     0 0 0 2px var(--card-outline);
-  display:grid;
-  grid-template-rows:auto auto 1fr auto auto auto;
+  display:flex;
+  flex-direction:column;
   gap:6px;
   box-sizing:border-box;
-  overflow:hidden;
+  flex:0 0 auto;
 }
 .battle-card.card-basico{
   --card-bg:linear-gradient(180deg, #efe0b7 0%, #e5d09b 100%);
@@ -867,7 +869,7 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   opacity:1;
   font-size:10px;
   background:var(--panel-bg);
-  color:var(--trainer-region-text);
+  color:var(--card-fg);
   border:1px solid var(--panel-border);
   border-radius:999px;
   padding:3px 8px;
@@ -931,7 +933,7 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 .battle-card.winner-glow{
   border:5px solid #ffcc00!important;
   box-shadow:0 0 30px #ffcc00;
-  transform:scale(1.1);
+  transform:scale(1.03);
   z-index:10;
 }
 .battle-card.loser-fade{
@@ -963,16 +965,15 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 .battle-gif{width:80px; height:80px; object-fit:contain;}
 .battle-card-header{display:none;}
 .battle-img{
-  width:148px;
-  height:148px;
+  width:118px;
+  height:118px;
   object-fit:contain;
   background:var(--sprite-bg);
-  border-radius:14px;
-  padding:8px;
+  border-radius:10px;
+  padding:6px;
   border:2px solid var(--panel-border);
   margin:0 auto;
   display:block;
-  align-self:center;
 }
 .battle-card.defeated::before{
   content:"X";
@@ -997,19 +998,19 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   color:var(--card-fg);
   text-align:center;
   line-height:1.15;
-  min-height:28px;
-  font-size:18px;
+  min-height:24px;
+  font-size:14px;
 }
 .battle-types{
   display:flex;
   justify-content:center;
   gap:6px;
   flex-wrap:wrap;
-  font-size:11px;
-  min-height:24px;
+  font-size:10px;
+  min-height:20px;
 }
 .battle-types .type-badge{
-  padding:4px 10px;
+  padding:4px 8px;
   border-radius:999px;
   border:1px solid var(--panel-border);
   background:var(--type-bg);
@@ -1019,19 +1020,19 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   margin-top:0;
   display:flex;
   flex-direction:column;
-  gap:5px;
-  font-size:11px;
+  gap:6px;
+  font-size:10px;
 }
 .stat-row{
   display:grid;
-  grid-template-columns:34px 1fr;
+  grid-template-columns:30px 1fr;
   align-items:center;
-  gap:8px;
+  gap:6px;
 }
 .stat-row > span{
   color:var(--stat-label);
 }
-.bar-bg{background:var(--stat-bg); height:10px; border-radius:6px; width:100%;}
+.bar-bg{background:var(--stat-bg); height:8px; border-radius:4px; width:100%;}
 .bar-fill{height:100%; border-radius:4px; transition:width 1s ease-in-out;}
 .bar-fill.hp{background:var(--hp-color);}
 .bar-fill.atk{background:var(--atk-color);}
@@ -1092,19 +1093,19 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   border-top:10px solid #0a2e2e;
 }
 @media (max-width: 720px){
-  .battle-arena{gap:10px; padding:12px;}
-  .battle-card{width:min(44vw, 210px); padding:10px 10px 8px;}
-  .battle-img{width:124px; height:124px;}
+  .battle-arena{gap:10px; padding:12px; justify-content:flex-start;}
+  .battle-card{width:min(42vw, 200px); padding:8px;}
+  .battle-img{width:96px; height:96px;}
   .battle-trainer{
-    gap:7px;
-    min-height:52px;
+    gap:8px;
+    min-height:50px;
   }
   .battle-trainer-avatar{
-    width:38px;
-    height:38px;
+    width:36px;
+    height:36px;
   }
-  .battle-name{font-size:15px; min-height:22px;}
-  .battle-types{font-size:10px; min-height:20px;}
+  .battle-name{font-size:12px; min-height:20px;}
+  .battle-types{font-size:9px; min-height:18px;}
   .versus-circle{margin:0;}
 }
 
@@ -1191,10 +1192,10 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   #view-battle .card{padding:12px;}
   .battle-stage{gap:10px;}
   .battle-card{
-    width:min(46vw, 186px);
+    width:min(44vw, 170px);
     padding:8px;
   }
-  .battle-img{width:108px; height:108px;}
+  .battle-img{width:84px; height:84px;}
   .battle-name{font-size:12px;}
   .battle-log{
     grid-template-columns:1fr;
@@ -1212,8 +1213,8 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 
   .battle-arena{gap:8px; padding:10px; border-width:3px;}
   .versus-circle{width:42px; height:42px; font-size:12px;}
-  .battle-card{width:min(46vw, 172px);}
-  .battle-img{width:92px; height:92px;}
+  .battle-card{width:min(44vw, 156px);}
+  .battle-img{width:72px; height:72px;}
   .battle-types{font-size:9px;}
   .stats-mini{font-size:9px;}
 }

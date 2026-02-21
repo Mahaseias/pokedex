@@ -1303,15 +1303,8 @@ function populateTrainerSelects(){
 }
 
 function getBattlePokemonSource(slot){
-  const trainer = getSelectedBattleTrainer(slot);
-  if (!trainer) return [...state.pokedex];
-  const teamSet = new Set((trainer.team || []).map(Number));
-  return [...state.pokedex].sort((a, b) => {
-    const aTeam = teamSet.has(Number(a.id)) ? 0 : 1;
-    const bTeam = teamSet.has(Number(b.id)) ? 0 : 1;
-    if (aTeam !== bTeam) return aTeam - bTeam;
-    return Number(a.id) - Number(b.id);
-  });
+  void slot;
+  return [...state.pokedex].sort((a, b) => Number(a.id) - Number(b.id));
 }
 
 function fillBattlePokemonSelect(slot, term){
