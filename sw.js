@@ -1,4 +1,4 @@
-const CACHE_NAME = "pokedex-kanto-v4";
+const CACHE_NAME = "pokedex-kanto-v5";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -26,7 +26,11 @@ const CORE_ASSETS = [
 const SPRITES = Array.from({ length: 151 }, (_, i) => `./assets/sprites/${i + 1}.gif`);
 const EXTRA_SPRITES = ["252","255","258","393","495","667","692","818","827","1000"].map(id => `./assets/sprites/${id}.gif`);
 const QR_EXAMPLES = ["./data/qr_25.png", "./data/qr_151.png"];
-const ASSETS = [...CORE_ASSETS, ...SPRITES, ...EXTRA_SPRITES, ...QR_EXAMPLES];
+const TRAINER_AVATARS = [
+  "arven","ash","blue","brendan","brock","calem","cilan","clemont","cynthia","dawn","ethan","gladion",
+  "hop","iono","iris","kiawe","lana","leon","lucas","lyra","marnie","may","misty","n","nemona","serena","steven","whitney"
+].map(name => `./assets/trainers/${name}.png`);
+const ASSETS = [...CORE_ASSETS, ...SPRITES, ...EXTRA_SPRITES, ...QR_EXAMPLES, ...TRAINER_AVATARS];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

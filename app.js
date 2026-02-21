@@ -117,6 +117,47 @@ const TYPE_PT = {
 };
 function typeLabel(t){ return TYPE_PT[t] || t; }
 
+const TRAINER_AVATAR_DIR = "./assets/trainers";
+const TRAINER_REGION_ORDER = ["Kanto","Johto","Hoenn","Sinnoh","Unova","Kalos","Alola","Galar","Paldea"];
+const PRESET_TRAINERS = [
+  { id: "ash-kanto", name: "Ash", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/ash.png`, team: [25, 1, 6, 12, 16, 143] },
+  { id: "gary-kanto", name: "Gary", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/blue.png`, team: [133, 59, 65, 112, 130, 3] },
+  { id: "misty-kanto", name: "Misty", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/misty.png`, team: [121, 134, 130, 55, 119, 73] },
+  { id: "brock-kanto", name: "Brock", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/brock.png`, team: [95, 112, 76, 141, 139, 111] },
+
+  { id: "ethan-johto", name: "Ethan", region: "Johto", avatar: `${TRAINER_AVATAR_DIR}/ethan.png`, team: [157, 181, 248, 169, 229, 130] },
+  { id: "lyra-johto", name: "Lyra", region: "Johto", avatar: `${TRAINER_AVATAR_DIR}/lyra.png`, team: [154, 189, 185, 196, 242, 241] },
+  { id: "whitney-johto", name: "Whitney", region: "Johto", avatar: `${TRAINER_AVATAR_DIR}/whitney.png`, team: [241, 113, 242, 35, 209, 181] },
+
+  { id: "brendan-hoenn", name: "Brendan", region: "Hoenn", avatar: `${TRAINER_AVATAR_DIR}/brendan.png`, team: [260, 282, 373, 376, 306, 310] },
+  { id: "may-hoenn", name: "May", region: "Hoenn", avatar: `${TRAINER_AVATAR_DIR}/may.png`, team: [257, 272, 308, 323, 324, 365] },
+  { id: "steven-hoenn", name: "Steven", region: "Hoenn", avatar: `${TRAINER_AVATAR_DIR}/steven.png`, team: [376, 306, 227, 303, 208, 373] },
+
+  { id: "dawn-sinnoh", name: "Dawn", region: "Sinnoh", avatar: `${TRAINER_AVATAR_DIR}/dawn.png`, team: [389, 400, 417, 428, 407, 473] },
+  { id: "lucas-sinnoh", name: "Lucas", region: "Sinnoh", avatar: `${TRAINER_AVATAR_DIR}/lucas.png`, team: [392, 405, 419, 424, 445, 475] },
+  { id: "cynthia-sinnoh", name: "Cynthia", region: "Sinnoh", avatar: `${TRAINER_AVATAR_DIR}/cynthia.png`, team: [445, 448, 407, 437, 350, 130] },
+
+  { id: "iris-unova", name: "Iris", region: "Unova", avatar: `${TRAINER_AVATAR_DIR}/iris.png`, team: [612, 623, 586, 579, 571, 635] },
+  { id: "cilan-unova", name: "Cilan", region: "Unova", avatar: `${TRAINER_AVATAR_DIR}/cilan.png`, team: [512, 542, 271, 598, 549, 547] },
+  { id: "n-unova", name: "N", region: "Unova", avatar: `${TRAINER_AVATAR_DIR}/n.png`, team: [530, 571, 637, 634, 593, 638] },
+
+  { id: "serena-kalos", name: "Serena", region: "Kalos", avatar: `${TRAINER_AVATAR_DIR}/serena.png`, team: [658, 700, 663, 697, 685, 689] },
+  { id: "calem-kalos", name: "Calem", region: "Kalos", avatar: `${TRAINER_AVATAR_DIR}/calem.png`, team: [652, 663, 701, 693, 695, 673] },
+  { id: "clemont-kalos", name: "Clemont", region: "Kalos", avatar: `${TRAINER_AVATAR_DIR}/clemont.png`, team: [695, 702, 479, 171, 462, 738] },
+
+  { id: "lana-alola", name: "Lana", region: "Alola", avatar: `${TRAINER_AVATAR_DIR}/lana.png`, team: [752, 730, 751, 729, 131, 130] },
+  { id: "kiawe-alola", name: "Kiawe", region: "Alola", avatar: `${TRAINER_AVATAR_DIR}/kiawe.png`, team: [727, 740, 105, 758, 776, 146] },
+  { id: "gladion-alola", name: "Gladion", region: "Alola", avatar: `${TRAINER_AVATAR_DIR}/gladion.png`, team: [745, 791, 792, 248, 197, 571] },
+
+  { id: "leon-galar", name: "Leon", region: "Galar", avatar: `${TRAINER_AVATAR_DIR}/leon.png`, team: [812, 823, 884, 887, 149, 6] },
+  { id: "hop-galar", name: "Hop", region: "Galar", avatar: `${TRAINER_AVATAR_DIR}/hop.png`, team: [816, 862, 823, 827, 873, 815] },
+  { id: "marnie-galar", name: "Marnie", region: "Galar", avatar: `${TRAINER_AVATAR_DIR}/marnie.png`, team: [877, 861, 510, 454, 560, 862] },
+
+  { id: "nemona-paldea", name: "Nemona", region: "Paldea", avatar: `${TRAINER_AVATAR_DIR}/nemona.png`, team: [908, 937, 979, 964, 923, 977] },
+  { id: "arven-paldea", name: "Arven", region: "Paldea", avatar: `${TRAINER_AVATAR_DIR}/arven.png`, team: [820, 949, 970, 952, 91, 943] },
+  { id: "iono-paldea", name: "Iono", region: "Paldea", avatar: `${TRAINER_AVATAR_DIR}/iono.png`, team: [939, 941, 923, 479, 877, 462] }
+];
+
 // Regiões e evolução extra para alguns cards novos
 const EXTRA_INFO = {
   667: { region: "Kalos", next: { name: "Pyroar", level: 35 } },
@@ -542,7 +583,8 @@ async function startCamera(){
     video: {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
-      facingMode: "environment",
+      aspectRatio: { ideal: 1.7777778 },
+      facingMode: { ideal: "environment" },
       advanced: [{ focusMode: "continuous" }]
     },
     audio: false
@@ -568,11 +610,11 @@ async function startCamera(){
   $("btn-stop").disabled = false;
   $("btn-ocr-capture").disabled = false;
   $("btn-ocr-retry").disabled = false;
-  $("scan-status").textContent = "Câmera ativa. Centralize o nome do card e toque em Foto + OCR.";
+  $("scan-status").textContent = "Câmera ativa. Posicione o nome dentro da moldura e toque em Foto + OCR.";
   state.scanning = true;
-  // auto captura em 3s
+  // auto captura em 4s para dar tempo de alinhar o card
   if (state.ocrTimer) clearTimeout(state.ocrTimer);
-  state.ocrTimer = setTimeout(() => captureAndOcr(), 3000);
+  state.ocrTimer = setTimeout(() => captureAndOcr(), 4000);
   scanLoop();
 }
 
@@ -729,34 +771,38 @@ async function ocrSnapshot(opts = { autoStop: false }){
       console.warn("OCR abortado: vídeo não pronto", { readyState: video.readyState });
       return;
     }
-    // ROI centralizada e simples para evitar cortes inválidos
+    // ROI centralizada no mesmo eixo da moldura visual
     const vw = video.videoWidth || 1;
     const vh = video.videoHeight || 1;
-    const cropW = Math.floor(vw * 0.84);
-    const cropH = Math.min(300, Math.floor(vh * 0.22));
+    const cropW = Math.floor(vw * 0.86);
+    const cropH = Math.min(260, Math.max(96, Math.floor(vh * 0.18)));
     const srcX = Math.max(0, Math.floor((vw - cropW) / 2));
-    const roiY1 = Math.max(0, Math.floor(vh * 0.22));
-    const roiY2 = Math.max(0, Math.floor(vh * 0.32));
+    const baseY = Math.max(0, Math.floor(vh * 0.42));
+    const maxY = Math.max(0, vh - cropH);
+    const clampY = (y) => Math.max(0, Math.min(maxY, y));
     const rois = [
-      { x: srcX, y: roiY1, w: cropW, h: cropH },
-      { x: srcX, y: roiY2, w: cropW, h: cropH }
+      { x: srcX, y: clampY(baseY - Math.floor(cropH * 0.55)), w: cropW, h: cropH },
+      { x: srcX, y: clampY(baseY), w: cropW, h: cropH },
+      { x: srcX, y: clampY(baseY + Math.floor(cropH * 0.55)), w: cropW, h: cropH }
     ];
 
     console.log("OCR ROI", { video: { vw, vh }, rois, ready: video.readyState });
 
     // Preview colorido (antes da binarização)
+    const previewRoi = rois[1] || rois[0];
     const preview = $("previewCanvas");
     if (preview){
       preview.width = cropW;
       preview.height = cropH;
       const pctx = preview.getContext("2d");
       pctx.clearRect(0,0,preview.width,preview.height);
-      pctx.drawImage(video, srcX, roiY1, cropW, cropH, 0, 0, preview.width, preview.height);
+      pctx.drawImage(video, previewRoi.x, previewRoi.y, previewRoi.w, previewRoi.h, 0, 0, preview.width, preview.height);
     }
 
     $("scan-status").textContent = opts.autoStop ? "Foto capturada. Lendo nome..." : "Lendo nome (OCR)...";
     const worker = await ensureOcr();
     const texts = [];
+    let lastPreviewCanvas = null;
 
     // helper para tentar leitura em um canvas
     const readCanvas = async (canvas, psm = "7") => {
@@ -777,6 +823,7 @@ async function ocrSnapshot(opts = { autoStop: false }){
           pctx.clearRect(0,0,preview.width,preview.height);
           pctx.drawImage(canvas,0,0);
         }
+        lastPreviewCanvas = canvas;
       } catch (errWorker){
         console.warn("Worker OCR falhou, tentando fallback único:", errWorker);
         if (window.Tesseract && window.Tesseract.recognize){
@@ -786,10 +833,12 @@ async function ocrSnapshot(opts = { autoStop: false }){
             preserve_interword_spaces: "1"
           });
           if (res.data?.text) texts.push(res.data.text);
+          lastPreviewCanvas = canvas;
         } else if (window.OCRAD){
           try{
             const t = window.OCRAD(canvas) || "";
             if (t) texts.push(t);
+            lastPreviewCanvas = canvas;
           } catch (errO){
             console.warn("OCRAD falhou:", errO);
           }
@@ -821,13 +870,13 @@ async function ocrSnapshot(opts = { autoStop: false }){
       if (opts.autoStop) stopCamera();
     } else {
       const preview = $("previewCanvas");
-      if (preview && !texts.length){
+      if (preview && !texts.length && lastPreviewCanvas){
         // Mostra pelo menos o recorte mesmo sem texto
-        preview.width = canvasNormal.width;
-        preview.height = canvasNormal.height;
+        preview.width = lastPreviewCanvas.width;
+        preview.height = lastPreviewCanvas.height;
         const pctx = preview.getContext("2d");
         pctx.clearRect(0,0,preview.width,preview.height);
-        pctx.drawImage(canvasNormal,0,0);
+        pctx.drawImage(lastPreviewCanvas,0,0);
       }
       const displayResultado = $("resultadoNome");
       if (displayResultado) displayResultado.innerText = "Não reconhecido. Tente novamente.";
@@ -1145,27 +1194,130 @@ async function registerSW(){
    BATALHA SIMPLES
 ---------------------------- */
 function populateBattleSelects(){
-  const opts = state.pokedex.map(p => ({ value: p.id, label: `#${p.id.toString().padStart(3,"0")} ${p.name}` }));
-  const selA = $("battle-a");
-  const selB = $("battle-b");
+  populateTrainerSelects();
+  fillBattlePokemonSelect("a");
+  fillBattlePokemonSelect("b");
+
+  const searchA = $("battle-search-a");
+  const searchB = $("battle-search-b");
+  const trainerA = $("battle-trainer-a");
+  const trainerB = $("battle-trainer-b");
+
+  if (searchA && !searchA.dataset.bound){
+    searchA.addEventListener("input", () => {
+      fillBattlePokemonSelect("a", searchA.value);
+      updateBattlePreview();
+    });
+    searchA.dataset.bound = "1";
+  }
+  if (searchB && !searchB.dataset.bound){
+    searchB.addEventListener("input", () => {
+      fillBattlePokemonSelect("b", searchB.value);
+      updateBattlePreview();
+    });
+    searchB.dataset.bound = "1";
+  }
+  if (trainerA && !trainerA.dataset.bound){
+    trainerA.addEventListener("change", () => {
+      if (searchA) searchA.value = "";
+      fillBattlePokemonSelect("a");
+      updateBattlePreview();
+    });
+    trainerA.dataset.bound = "1";
+  }
+  if (trainerB && !trainerB.dataset.bound){
+    trainerB.addEventListener("change", () => {
+      if (searchB) searchB.value = "";
+      fillBattlePokemonSelect("b");
+      updateBattlePreview();
+    });
+    trainerB.dataset.bound = "1";
+  }
+}
+
+function getTrainerById(id){
+  return PRESET_TRAINERS.find(t => t.id === id) || null;
+}
+
+function getSelectedBattleTrainer(slot){
+  const sel = $(`battle-trainer-${slot}`);
+  return getTrainerById(sel?.value);
+}
+
+function populateTrainerSelects(){
+  const selA = $("battle-trainer-a");
+  const selB = $("battle-trainer-b");
   if (!selA || !selB) return;
-  const fill = (sel, term = "") => {
+
+  const currentA = selA.value;
+  const currentB = selB.value;
+  const fill = (sel) => {
     sel.innerHTML = "";
-    const f = term.trim().toLowerCase();
-    opts.filter(o => !f || o.label.toLowerCase().includes(f) || String(o.value).includes(f))
-        .forEach(o => {
-          const opt = document.createElement("option");
-          opt.value = o.value;
-          opt.textContent = o.label;
-          sel.appendChild(opt);
-        });
+    const grouped = PRESET_TRAINERS.reduce((acc, trainer) => {
+      if (!acc[trainer.region]) acc[trainer.region] = [];
+      acc[trainer.region].push(trainer);
+      return acc;
+    }, {});
+    const unknownRegions = Object.keys(grouped).filter(region => !TRAINER_REGION_ORDER.includes(region)).sort();
+    const orderedRegions = [...TRAINER_REGION_ORDER, ...unknownRegions];
+
+    orderedRegions.forEach((region) => {
+      const trainers = grouped[region];
+      if (!trainers || !trainers.length) return;
+      const group = document.createElement("optgroup");
+      group.label = region;
+      trainers.forEach((trainer) => {
+        const opt = document.createElement("option");
+        opt.value = trainer.id;
+        opt.textContent = trainer.name;
+        group.appendChild(opt);
+      });
+      sel.appendChild(group);
+    });
   };
   fill(selA);
   fill(selB);
-  const searchA = $("battle-search-a");
-  const searchB = $("battle-search-b");
-  if (searchA) searchA.addEventListener("input", () => { fill(selA, searchA.value); updateBattlePreview(); });
-  if (searchB) searchB.addEventListener("input", () => { fill(selB, searchB.value); updateBattlePreview(); });
+
+  const defaultA = "ash-kanto";
+  const defaultB = "gary-kanto";
+  selA.value = getTrainerById(currentA)?.id || defaultA;
+  selB.value = getTrainerById(currentB)?.id || defaultB;
+}
+
+function getBattlePokemonSource(slot){
+  const trainer = getSelectedBattleTrainer(slot);
+  if (!trainer) return state.pokedex;
+  const byId = new Map(state.pokedex.map(p => [p.id, p]));
+  return trainer.team.map(id => byId.get(Number(id))).filter(Boolean);
+}
+
+function fillBattlePokemonSelect(slot, term){
+  const sel = slot === "a" ? $("battle-a") : $("battle-b");
+  const search = slot === "a" ? $("battle-search-a") : $("battle-search-b");
+  if (!sel) return;
+
+  const keepValue = sel.value;
+  const query = String(term ?? search?.value ?? "").trim().toLowerCase();
+  const source = getBattlePokemonSource(slot);
+  const opts = source
+    .map(p => ({ value: p.id, label: `#${p.id.toString().padStart(3,"0")} ${p.name}` }))
+    .filter(o => !query || o.label.toLowerCase().includes(query) || String(o.value).includes(query));
+
+  sel.innerHTML = "";
+  for (const o of opts){
+    const opt = document.createElement("option");
+    opt.value = o.value;
+    opt.textContent = o.label;
+    sel.appendChild(opt);
+  }
+  if (!opts.length){
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "Nenhum Pokémon encontrado";
+    sel.appendChild(empty);
+  }
+  const keepExists = Array.from(sel.options).some(opt => opt.value === keepValue);
+  if (keepExists) sel.value = keepValue;
 }
 
 function simulateBattle(){
@@ -1178,18 +1330,33 @@ function simulateBattle(){
     state.battleTimer = null;
   }
   resetBattleState();
+
+  const trainerA = getSelectedBattleTrainer("a");
+  const trainerB = getSelectedBattleTrainer("b");
+  const trainerAName = trainerA?.name || "Treinador A";
+  const trainerBName = trainerB?.name || "Treinador B";
+  const trainerATitle = `${trainerAName} (${trainerA?.region || "Kanto"})`;
+  const trainerBTitle = `${trainerBName} (${trainerB?.region || "Kanto"})`;
+  const battleTitle = `${trainerATitle} vs ${trainerBTitle}`;
+
   const idA = Number(selA.value);
   const idB = Number(selB.value);
-  if (idA === idB){
-    renderBattleLog("Type advantage", "SEM BATALHA", "Escolha dois Pokemon diferentes.");
+  if (!idA || !idB){
+    renderBattleLog(battleTitle, "SEM BATALHA", "Selecione os dois Pokémon.");
     return;
   }
+  if (idA === idB){
+    renderBattleLog(battleTitle, "SEM BATALHA", "Escolha dois Pokémon diferentes.");
+    return;
+  }
+
   const pokeA = state.pokedex.find(p => p.id === idA);
   const pokeB = state.pokedex.find(p => p.id === idB);
   if (!pokeA || !pokeB){
-    renderBattleLog("Type advantage", "ERRO", "Pokemon invalido.");
+    renderBattleLog(battleTitle, "ERRO", "Pokémon inválido.");
     return;
   }
+
   const effectiveness = (atk, def) => {
     const chart = {
       Fire: { Grass: 1.6, Ice: 1.6, Bug: 1.3, Steel: 1.6, Water: 0.7, Rock: 0.7, Fire: 0.7 },
@@ -1223,6 +1390,7 @@ function simulateBattle(){
     const total = Math.round((base + rand) * mult);
     return { base, rand, mult, total };
   };
+
   const scoreA = calcPower(pokeA, pokeB);
   const scoreB = calcPower(pokeB, pokeA);
   const winner = scoreA.total === scoreB.total ? null : (scoreA.total > scoreB.total ? pokeA : pokeB);
@@ -1237,10 +1405,12 @@ function simulateBattle(){
     else if (winData.mult <= 0.8) badge = "POUCO EFETIVO";
   }
 
-  let reason = "Empate! Rodem de novo.";
+  let reason = `Empate entre ${trainerAName} e ${trainerBName}. Rodem de novo.`;
   if (winner){
     const loser = winner === pokeA ? pokeB : pokeA;
-    reason = `${winner.name} venceu! ${winType} tem vantagem sobre ${loseType}. Bonus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}. ${loser.name} ficou fora de combate, leve até um pokecenter.`;
+    const winnerTrainer = winner === pokeA ? trainerAName : trainerBName;
+    const loserTrainer = winner === pokeA ? trainerBName : trainerAName;
+    reason = `${winnerTrainer} venceu com ${winner.name}! ${winType} teve vantagem sobre ${loseType}. Bônus x${winData.mult.toFixed(2)}. Sorte ${winData.rand} vs ${loseData.rand}. ${loserTrainer} deve recuperar ${loser.name} no Centro Pokémon.`;
   }
 
   const hpA = Math.min(100, Math.max(10, Math.round(scoreA.total)));
@@ -1278,7 +1448,34 @@ function simulateBattle(){
     playLevelUpSound();
   }, 1500);
 
-  renderBattleLog("Type advantage", badge, reason);
+  renderBattleLog(battleTitle, badge, reason);
+}
+
+function trainerAvatarFallback(name){
+  const initial = String(name || "?").trim().charAt(0).toUpperCase() || "?";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='#274774' offset='0'/><stop stop-color='#121f38' offset='1'/></linearGradient></defs><rect width='96' height='96' fill='url(#g)'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='44' fill='#f4f8ff' font-weight='700'>${initial}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function updateBattleTrainerCard(prefix, trainer, fallbackName){
+  const trainerNameEl = $(`${prefix}-trainer-name`);
+  const trainerRegionEl = $(`${prefix}-trainer-region`);
+  const trainerBadgeEl = $(`${prefix}-trainer-badge`);
+  const trainerAvatarEl = $(`${prefix}-trainer-avatar`);
+  const trainerName = trainer?.name || fallbackName;
+  const trainerRegion = trainer?.region || "Kanto";
+
+  if (trainerNameEl) trainerNameEl.textContent = trainer?.name || fallbackName;
+  if (trainerRegionEl) trainerRegionEl.textContent = trainerRegion;
+  if (trainerBadgeEl) trainerBadgeEl.textContent = trainerRegion.toUpperCase();
+  if (trainerAvatarEl){
+    trainerAvatarEl.alt = `Treinador ${trainerName}`;
+    trainerAvatarEl.src = trainer?.avatar || trainerAvatarFallback(trainerName);
+    trainerAvatarEl.onerror = () => {
+      trainerAvatarEl.onerror = null;
+      trainerAvatarEl.src = trainerAvatarFallback(trainerName);
+    };
+  }
 }
 
 function updateBattlePreview(){
@@ -1288,10 +1485,22 @@ function updateBattlePreview(){
   const cardB = $("pokemon-2-card");
   if (cardA) cardA.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
   if (cardB) cardB.classList.remove("winner-card","loser-card","winner-glow","loser-fade","shaking","defeated");
-  renderBattleLog("Type advantage", "PRONTO", "Escolha os dois Pokemon e clique em Simular.");
+
+  const trainerA = getSelectedBattleTrainer("a");
+  const trainerB = getSelectedBattleTrainer("b");
+  const trainerAName = trainerA?.name || "Treinador A";
+  const trainerBName = trainerB?.name || "Treinador B";
+  const trainerATitle = `${trainerAName} (${trainerA?.region || "Kanto"})`;
+  const trainerBTitle = `${trainerBName} (${trainerB?.region || "Kanto"})`;
+  renderBattleLog(`${trainerATitle} vs ${trainerBTitle}`, "PRONTO", "Escolha os dois Pokémon e clique em Simular.");
+
   if (!selA || !selB) return;
   const pokeA = state.pokedex.find(p => p.id === Number(selA.value));
   const pokeB = state.pokedex.find(p => p.id === Number(selB.value));
+
+  updateBattleTrainerCard("p1", trainerA, "Treinador A");
+  updateBattleTrainerCard("p2", trainerB, "Treinador B");
+
   const fillCard = (prefix, poke) => {
     const img = $(`${prefix}-img`);
     const nameEl = $(`${prefix}-name`);
@@ -1302,8 +1511,12 @@ function updateBattlePreview(){
       img.alt = poke.name;
       img.style.display = "block";
       img.onerror = () => { img.onerror = null; img.src = spriteUrl(poke.id); };
+    } else if (img){
+      img.removeAttribute("src");
+      img.alt = "";
+      img.style.display = "none";
     }
-    if (nameEl) nameEl.textContent = poke ? poke.name : "Pokemon";
+    if (nameEl) nameEl.textContent = poke ? poke.name : "Pokémon";
     if (typesEl) typesEl.innerHTML = poke ? (poke.types||[]).map(t => `<span class="type-badge">${escapeHtml(typeLabel(t))}</span>`).join("") : "";
     if (advEl) advEl.style.display = "none";
   };
@@ -1354,7 +1567,7 @@ function setAdvantage(prefix, mult){
     advEl.textContent = "Vantagem de tipo";
   } else if (mult < 0.95){
     advEl.style.display = "block";
-    advEl.textContent = "Desvantagem";
+    advEl.textContent = "Desvantagem de tipo";
   } else {
     advEl.style.display = "none";
   }

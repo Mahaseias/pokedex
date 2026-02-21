@@ -376,9 +376,9 @@ button.mini{
 .camera-container{
   position:relative;
   width:100%;
-  max-width:520px;
+  max-width:620px;
   margin:0 auto;
-  aspect-ratio: 4/3;
+  aspect-ratio: 16/10;
   background:rgba(0,0,0,.25);
   border:1px solid var(--border);
   border-radius:12px;
@@ -388,33 +388,50 @@ video{
   width:100%;
   height:100%;
   object-fit:cover;
-  filter: brightness(1.5) contrast(1.2);
+  object-position:center 42%;
+  filter:brightness(1.25) contrast(1.1) saturate(1.05);
 }
 .overlay{
   position:absolute;
   inset:0;
-  box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.55);
+  background:linear-gradient(
+    180deg,
+    rgba(0,0,0,0.45) 0%,
+    rgba(0,0,0,0.2) 30%,
+    rgba(0,0,0,0.18) 70%,
+    rgba(0,0,0,0.45) 100%
+  );
   pointer-events:none;
   z-index:2;
 }
 .focus-region{
   position:absolute;
-  top:25%;
-  left:10%;
-  width:80%;
-  height:120px;
-  border:2px solid #00ffcc;
-  border-radius:8px;
-  box-shadow:0 0 15px rgba(0,255,204,0.4);
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:86%;
+  max-width:540px;
+  height:28%;
+  min-height:96px;
+  max-height:140px;
+  border:3px solid #ffd95a;
+  border-radius:12px;
+  box-shadow:
+    0 0 0 999px rgba(0,0,0,0.34),
+    0 0 20px rgba(255,217,90,0.5);
+  background:rgba(255,217,90,0.08);
   display:flex;
   align-items:center;
   justify-content:center;
-  color:#00ffcc;
+  color:#fff8d0;
   font-family:var(--font-title);
   font-size:11px;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);
 }
 .focus-region::after{
   content:"Encaixe o nome do Pokémon aqui";
+  text-align:center;
+  padding:0 10px;
 }
 .preview-box{
   margin-top:10px;
@@ -423,7 +440,7 @@ video{
 #previewCanvas{
   border:1px solid #fff;
   background:#000;
-  width:80%;
+  width:86%;
   max-width:380px;
   height:auto;
 }
@@ -763,7 +780,7 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   align-items:center;
   justify-content:space-between;
   font-size:9px;
-  margin-bottom:6px;
+  margin-bottom:8px;
 }
 .battle-tag{
   background:rgba(0,0,0,.15);
@@ -774,6 +791,49 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
 .battle-icons{
   opacity:0.7;
   font-size:10px;
+}
+.battle-trainer{
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.battle-trainer-avatar{
+  width:46px;
+  height:46px;
+  border-radius:10px;
+  border:2px solid rgba(0,0,0,.2);
+  background:rgba(16,24,38,.75);
+  object-fit:cover;
+  flex:0 0 auto;
+}
+.battle-trainer-meta{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+}
+.battle-trainer-name{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  font-weight:700;
+  background:rgba(0,0,0,.14);
+  border-radius:8px;
+  padding:4px 8px;
+  line-height:1.2;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.battle-trainer-region{
+  font-size:9px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(0,0,0,.2);
 }
 .battle-card.winner-card{
   border-color:#ffcc00;
@@ -907,6 +967,13 @@ button.mini{padding:6px 10px; border-radius:10px; font-size:10px;}
   .battle-arena{gap:10px; padding:12px;}
   .battle-card{width:min(42vw, 200px);}
   .battle-img{width:96px; height:96px;}
+  .battle-trainer{
+    gap:8px;
+  }
+  .battle-trainer-avatar{
+    width:40px;
+    height:40px;
+  }
   .versus-circle{margin:0;}
 }
 
