@@ -123,18 +123,12 @@ const CARD_MODEL_BY_REGION = {
   Kanto: "card-basico",
   Johto: "card-intermediario",
   Hoenn: "card-intermediario",
-  Sinnoh: "card-avancado",
-  Unova: "card-avancado",
+  Sinnoh: "card-intermediario",
+  Unova: "card-intermediario",
   Kalos: "card-avancado",
-  Alola: "card-elite",
-  Galar: "card-elite",
-  Paldea: "card-elite"
-};
-const CARD_MODEL_LABEL = {
-  "card-basico": "CARD BASICO",
-  "card-intermediario": "CARD INTERMEDIARIO",
-  "card-avancado": "CARD AVANCADO",
-  "card-elite": "CARD ELITE"
+  Alola: "card-avancado",
+  Galar: "card-avancado",
+  Paldea: "card-avancado"
 };
 const PRESET_TRAINERS = [
   { id: "ash-kanto", name: "Ash", region: "Kanto", avatar: `${TRAINER_AVATAR_DIR}/ash.png`, team: [25, 1, 6, 12, 16, 143] },
@@ -1212,13 +1206,20 @@ async function registerSW(){
 ---------------------------- */
 function populateBattleSelects(){
   populateTrainerSelects();
-  fillBattlePokemonSelect("a");
-  fillBattlePokemonSelect("b");
-
   const searchA = $("battle-search-a");
   const searchB = $("battle-search-b");
   const trainerA = $("battle-trainer-a");
   const trainerB = $("battle-trainer-b");
+  if (searchA && !searchA.dataset.initialized){
+    searchA.value = "";
+    searchA.dataset.initialized = "1";
+  }
+  if (searchB && !searchB.dataset.initialized){
+    searchB.value = "";
+    searchB.dataset.initialized = "1";
+  }
+  fillBattlePokemonSelect("a");
+  fillBattlePokemonSelect("b");
 
   if (searchA && !searchA.dataset.bound){
     searchA.addEventListener("input", () => {
@@ -1303,9 +1304,14 @@ function populateTrainerSelects(){
 
 function getBattlePokemonSource(slot){
   const trainer = getSelectedBattleTrainer(slot);
-  if (!trainer) return state.pokedex;
-  const byId = new Map(state.pokedex.map(p => [p.id, p]));
-  return trainer.team.map(id => byId.get(Number(id))).filter(Boolean);
+  if (!trainer) return [...state.pokedex];
+  const teamSet = new Set((trainer.team || []).map(Number));
+  return [...state.pokedex].sort((a, b) => {
+    const aTeam = teamSet.has(Number(a.id)) ? 0 : 1;
+    const bTeam = teamSet.has(Number(b.id)) ? 0 : 1;
+    if (aTeam !== bTeam) return aTeam - bTeam;
+    return Number(a.id) - Number(b.id);
+  });
 }
 
 function fillBattlePokemonSelect(slot, term){
@@ -1488,10 +1494,8 @@ function applyBattleCardModel(prefix, region){
   const cardEl = getBattleCardElementByPrefix(prefix);
   if (!cardEl) return;
   const model = getBattleCardModel(region);
-  cardEl.classList.remove("card-basico", "card-intermediario", "card-avancado", "card-elite");
+  cardEl.classList.remove("card-basico", "card-intermediario", "card-avancado");
   cardEl.classList.add(model);
-  const tagEl = cardEl.querySelector(".battle-tag");
-  if (tagEl) tagEl.textContent = CARD_MODEL_LABEL[model] || "CARD";
 }
 
 function updateBattleTrainerCard(prefix, trainer, fallbackName){
@@ -1503,8 +1507,8 @@ function updateBattleTrainerCard(prefix, trainer, fallbackName){
   const trainerRegion = trainer?.region || "Kanto";
 
   if (trainerNameEl) trainerNameEl.textContent = trainer?.name || fallbackName;
-  if (trainerRegionEl) trainerRegionEl.textContent = trainerRegion;
-  if (trainerBadgeEl) trainerBadgeEl.textContent = trainerRegion.toUpperCase();
+  if (trainerRegionEl) trainerRegionEl.textContent = "";
+  if (trainerBadgeEl) trainerBadgeEl.textContent = "";
   applyBattleCardModel(prefix, trainerRegion);
   if (trainerAvatarEl){
     trainerAvatarEl.alt = `Treinador ${trainerName}`;
